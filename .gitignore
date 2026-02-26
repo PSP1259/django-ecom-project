@@ -50,3 +50,5 @@ Thumbs.db
 db.sqlite3*
 *.bak
 static/assets/node_modules/
+
+Ztemplate/
