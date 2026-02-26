@@ -46,3 +46,7 @@ htmlcov/
 # OS files
 .DS_Store
 Thumbs.db
+
+db.sqlite3*
+*.bak
+static/assets/node_modules/
