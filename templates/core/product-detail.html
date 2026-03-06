@@ -30,19 +30,19 @@
                                             <!-- MAIN SLIDES -->
                                             <div class="product-image-slider">
                                                 <figure class="border-radius-10">
-                                                    <img src="{{p.image.url}}" alt="product image" />
+                                                    <img src="{% if p.image %}{{ p.image.url }}{% else %}{% static 'assets/imgs/shop/product-1-1.jpg' %}{% endif %}" alt="product image" />
                                                 </figure>
                                                 {% for p in p_image %}
                                                 <figure class="border-radius-10">
-                                                    <img src="{{ p.images.url }}" alt="product image" />
+                                                    <img src="{% if p.images %}{{ p.images.url }}{% else %}{% static 'assets/imgs/shop/product-1-1.jpg' %}{% endif %}" alt="product image" />
                                                 </figure>
                                                {% endfor %}
                                             </div>
                                             <!-- THUMBNAILS -->
                                             <div class="slider-nav-thumbnails">
-                                                <div><img style="width: 140px; height: 140px; object-fit: cover;"  src="{{p.image.url}}" alt="product image" /></div>
+                                                <div><img style="width: 140px; height: 140px; object-fit: cover;"  src="{% if p.image %}{{ p.image.url }}{% else %}{% static 'assets/imgs/shop/product-1-1.jpg' %}{% endif %}" alt="product image" /></div>
                                                 {% for p in p_image %}
-                                                <div><img style="width: 140px; height: 140px; object-fit: cover;" src="{{p.images.url}}" alt="product image" /></div>
+                                                <div><img style="width: 140px; height: 140px; object-fit: cover;" src="{% if p.images %}{{ p.images.url }}{% else %}{% static 'assets/imgs/shop/product-1-1.jpg' %}{% endif %}" alt="product image" /></div>
                                                 {% endfor %}
                                             </div>
                                         </div>
@@ -80,7 +80,7 @@
                                                 <div class="product-extra-link2">
                                                     
                                                         <input type="hidden" class="product-pid-{{ p.id }}" value="{{ p.pid }}">
-                                                        <input type="hidden" class="product-image-{{ p.id }}" value="{{ p.image.url }}">
+                                                        <input type="hidden" class="product-image-{{ p.id }}" value="{% if p.image %}{{ p.image.url }}{% else %}{% static 'assets/imgs/shop/product-1-1.jpg' %}{% endif %}">
                                                         <input type="hidden" class="product-id-{{ p.id }}" value="{{ p.id }}">
                                                         <input type="hidden" class="product-title-{{ p.id }}" value="{{ p.title }}">
 
@@ -224,7 +224,7 @@
                                             </div>
                                             <div class="tab-pane fade" id="Vendor-info">
                                                 <div class="vendor-logo d-flex mb-30">
-                                                    <img src="{{p.vendor.image.url}}" alt="" />
+                                                    <img src="{% if p.vendor.image %}{{ p.vendor.image.url }}{% else %}{% static 'assets/imgs/theme/icons/icon-user.svg' %}{% endif %}" alt="" />
                                                     <div class="vendor-name ml-15">
                                                         <h6>
                                                             <a href="vendor-details-2.html">{{p.vendor.title}}</a>
@@ -268,7 +268,7 @@
                                                                 <div class="single-comment justify-content-between d-flex mb-30">
                                                                     <div class="user justify-content-between d-flex">
                                                                         <div class="thumb text-center">
-                                                                            <img src="{{ r.user.profile.image.url }}" style="width: 100px; height: 100px; object-fit: cover;" alt="" />
+                                                                            <img src="{% if r.user.profile.image %}{{ r.user.profile.image.url }}{% else %}{% static 'assets/imgs/theme/icons/icon-user.svg' %}{% endif %}" style="width: 100px; height: 100px; object-fit: cover;" alt="" />
                                                                             <a href="#" class="font-heading text-brand">{{r.user.username|title}}</a>
                                                                         </div>
 
@@ -394,8 +394,8 @@
                                                     <div class="product-img-action-wrap">
                                                         <div class="product-img product-img-zoom">
                                                             <a href="{% url 'core:product-detail' p.pid %}">
-                                                                <img class="default-img" src="{{ p.image.url }}" alt="" style="height: 280px; width: 280px; object-fit: cover;"   />
-                                                                <img class="hover-img" src="{{ p.image.url }}" alt=""  style="height: 280px; width: 280px; object-fit: cover;"  />
+                                                                <img class="default-img" src="{% if p.image %}{{ p.image.url }}{% else %}{% static 'assets/imgs/shop/product-1-1.jpg' %}{% endif %}" alt="" style="height: 280px; width: 280px; object-fit: cover;"   />
+                                                                <img class="hover-img" src="{% if p.image %}{{ p.image.url }}{% else %}{% static 'assets/imgs/shop/product-1-1.jpg' %}{% endif %}" alt=""  style="height: 280px; width: 280px; object-fit: cover;"  />
 
                                                             </a>
                                                         </div>
@@ -433,7 +433,7 @@
                                                             <div class="add-cart">
                                                                 <input type="hidden" value="1" id="product-quantity" class="product-quantity-{{ p.id }}">
                                                                 <input type="hidden" class="product-pid-{{ p.id }}" value="{{ p.pid }}">
-                                                                <input type="hidden" class="product-image-{{ p.id }}" value="{{ p.image.url }}">
+                                                                <input type="hidden" class="product-image-{{ p.id }}" value="{% if p.image %}{{ p.image.url }}{% else %}{% static 'assets/imgs/shop/product-1-1.jpg' %}{% endif %}">
                                                                 <input type="hidden" class="product-id-{{ p.id }}" value="{{ p.id }}">
                                                                 <input type="hidden" class="product-title-{{ p.id }}" value="{{ p.title }}">
                                                                 <div class="d-flex">
@@ -459,15 +459,27 @@
                                     <li>
                                         <i class="fi fi-rs-marker mr-10 text-brand"></i>
                                         <span>
-                                            {{ address.address }} <br />
-                                             <br />
-                                             {% if address.status == True  %}
-                                             <span class="text-success">Verified Address </span>
-                                             {% else %}
-                                             <span class="text-danger">Unverified Address </span>
-                                             {% endif %}
+                                            {% if request.user.is_authenticated %}
+                                                {% if address %}
+                                                    {{ address.address }} <br />
+                                                    <br />
+                                                    {% if address.status == True %}
+                                                        <span class="text-success">Verified Address</span>
+                                                    {% else %}
+                                                        <span class="text-danger">Unverified Address</span>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <span class="text-muted">No default address set yet.</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-muted">Please sign in to view delivery address.</span>
+                                            {% endif %}
                                         </span>
-                                        <a href="{% url 'core:dashboard' %}" class="change float-end">Change</a>
+                                        {% if request.user.is_authenticated %}
+                                            <a href="{% url 'core:dashboard' %}" class="change float-end">Change</a>
+                                        {% else %}
+                                            <a href="{% url 'userauths:sign-in' %}" class="change float-end">Sign in</a>
+                                        {% endif %}
                                     </li>
                                     <li class="hr"><span></span></li>
                                 </ul>
@@ -490,7 +502,7 @@
                             <div class="sidebar-widget widget-vendor mb-30 bg-grey-9 box-shadow-none">
                                 <h5 class="section-title style-3 mb-20">Vendor</h5>
                                 <div class="vendor-logo d-flex mb-30">
-                                    <img src="{{p.vendor.image.url}}" alt="" />
+                                    <img src="{% if p.vendor.image %}{{ p.vendor.image.url }}{% else %}{% static 'assets/imgs/theme/icons/icon-user.svg' %}{% endif %}" alt="" />
                                     <div class="vendor-name ml-15">
                                         <h6>
                                             <a href="vendor-details-2.html">{{p.vendor.title}}</a>

@@ -85,8 +85,7 @@ def vendor_detail_view(request, vid):
 
 
 def product_detail_view(request, pid):
-    product = Product.objects.get(pid=pid)
-    # product = get_object_or_404(Product, pid=pid)
+    product = get_object_or_404(Product, pid=pid)
     products = Product.objects.filter(category=product.category).exclude(pid=pid)
 
     # Getting all reviews related to a product
@@ -99,16 +98,15 @@ def product_detail_view(request, pid):
     review_form = ProductReviewForm()
 
 
-    make_review = True 
+    make_review = True
+    address = None
 
     if request.user.is_authenticated:
-        address = Address.objects.get(status=True, user=request.user)
+        address = Address.objects.filter(status=True, user=request.user).first()
         user_review_count = ProductReview.objects.filter(user=request.user, product=product).count()
 
         if user_review_count > 0:
             make_review = False
-    
-    address = "Login To Continue"
 
 
     p_image = product.p_images.all()
@@ -291,87 +289,57 @@ def update_cart(request):
 
 
 def save_checkout_info(request):
-    cart_total_amount = 0
+    if not request.user.is_authenticated:
+        messages.warning(request, "Please sign in to continue checkout")
+        return redirect("userauths:sign-in")
+
+    if request.method != "POST":
+        messages.warning(request, "Invalid checkout request")
+        return redirect("core:cart")
+
+    if "cart_data_obj" not in request.session or not request.session["cart_data_obj"]:
+        messages.warning(request, "Your cart is empty")
+        return redirect("core:index")
+
     total_amount = 0
-    if request.method == "POST":
-        full_name = request.POST.get("full_name")
-        email = request.POST.get("email")
-        mobile = request.POST.get("mobile")
-        address = request.POST.get("address")
-        city = request.POST.get("city")
-        state = request.POST.get("state")
-        country = request.POST.get("country")
 
-        print(full_name)
-        print(email)
-        print(mobile)
-        print(address)
-        print(city)
-        print(state)
-        print(country)
+    request.session["full_name"] = request.POST.get("full_name")
+    request.session["email"] = request.POST.get("email")
+    request.session["mobile"] = request.POST.get("mobile")
+    request.session["address"] = request.POST.get("address")
+    request.session["city"] = request.POST.get("city")
+    request.session["state"] = request.POST.get("state")
+    request.session["country"] = request.POST.get("country")
 
-        request.session['full_name'] = full_name
-        request.session['email'] = email
-        request.session['mobile'] = mobile
-        request.session['address'] = address
-        request.session['city'] = city
-        request.session['state'] = state
-        request.session['country'] = country
+    for p_id, item in request.session["cart_data_obj"].items():
+        total_amount += int(item["qty"]) * float(item["price"])
 
+    order = CartOrder.objects.create(
+        user=request.user,
+        price=total_amount,
+        full_name=request.session["full_name"],
+        email=request.session["email"],
+        phone=request.session["mobile"],
+        address=request.session["address"],
+        city=request.session["city"],
+        state=request.session["state"],
+        country=request.session["country"],
+    )
 
-        if 'cart_data_obj' in request.session:
+    for session_key in ["full_name", "email", "mobile", "address", "city", "state", "country"]:
+        request.session.pop(session_key, None)
 
-            # Getting total amount for Paypal Amount
-            for p_id, item in request.session['cart_data_obj'].items():
-                total_amount += int(item['qty']) * float(item['price'])
+    for p_id, item in request.session["cart_data_obj"].items():
+        CartOrderProducts.objects.create(
+            order=order,
+            invoice_no="INVOICE_NO-" + str(order.id),
+            item=item["title"],
+            image=item["image"],
+            qty=item["qty"],
+            price=item["price"],
+            total=float(item["qty"]) * float(item["price"]),
+        )
 
-
-            full_name = request.session['full_name']
-            email = request.session['email']
-            phone = request.session['mobile']
-            address = request.session['address']
-            city = request.session['city']
-            state = request.session['state']
-            country = request.session['country']
-
-            # Create ORder Object
-            order = CartOrder.objects.create(
-                user=request.user,
-                price=total_amount,
-                full_name=full_name,
-                email=email,
-                phone=phone,
-                address=address,
-                city=city,
-                state=state,
-                country=country,
-            )
-
-            del request.session['full_name']
-            del request.session['email']
-            del request.session['mobile']
-            del request.session['address']
-            del request.session['city']
-            del request.session['state']
-            del request.session['country']
-
-            # Getting total amount for The Cart
-            for p_id, item in request.session['cart_data_obj'].items():
-                cart_total_amount += int(item['qty']) * float(item['price'])
-
-                cart_order_products = CartOrderProducts.objects.create(
-                    order=order,
-                    invoice_no="INVOICE_NO-" + str(order.id), # INVOICE_NO-5,
-                    item=item['title'],
-                    image=item['image'],
-                    qty=item['qty'],
-                    price=item['price'],
-                    total=float(item['qty']) * float(item['price'])
-                )
-
-
-
-        return redirect("core:checkout", order.oid)
     return redirect("core:checkout", order.oid)
 
 
@@ -529,7 +497,10 @@ def make_address_default(request):
 
 @login_required
 def wishlist_view(request):
-    wishlist = wishlist_model.objects.all()
+    wishlist = wishlist_model.objects.filter(
+        user=request.user,
+        product__isnull=False,
+    ).select_related("product").order_by("-id")
     context = {
         "w":wishlist
     }
@@ -580,10 +551,18 @@ def add_to_wishlist(request):
 
 def remove_wishlist(request):
     pid = request.GET['id']
-    wishlist = wishlist_model.objects.filter(user=request.user)
-    wishlist_d = wishlist_model.objects.get(id=pid)
+    wishlist = wishlist_model.objects.filter(
+        user=request.user,
+        product__isnull=False,
+    ).select_related("product").order_by("-id")
+    wishlist_d = get_object_or_404(wishlist_model, id=pid, user=request.user)
     delete_product = wishlist_d.delete()
     
+    wishlist = wishlist_model.objects.filter(
+        user=request.user,
+        product__isnull=False,
+    ).select_related("product").order_by("-id")
+
     context = {
         "bool":True,
         "w":wishlist
