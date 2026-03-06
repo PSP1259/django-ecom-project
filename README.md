@@ -615,4 +615,5 @@
 
 - `Procfile` web: gunicorn ecom.wsgi --log-file -
 - Test modules exist but contain little/no real automated coverage.
-- Project contains both custom code and many third-party static assets; upgrades should isolate custom overrides.
+- Project contains both custom code and many third-party static assets; upgrades should isolate custom overrides.#   d j a n o g - r a i l w a y  
+ 
