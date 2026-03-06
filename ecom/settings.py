@@ -14,6 +14,7 @@ from pathlib import Path
 import os
 from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
+import dj_database_url
 
 from environs import Env
 env = Env()
