@@ -1,4 +1,88 @@
+# Ecommerce Tracking (GA4) - Quick Setup (Top Priority)
 
+> Last refresh: 2026-03-11  
+> Tracking currency in this project: `CHF`
+
+## 1. What is already implemented
+
+This project now sends the 4 required GA4 ecommerce events with `currency`, `value`, and `items`:
+
+- `view_item` -> [templates/core/product-detail.html](templates/core/product-detail.html)
+- `add_to_cart` -> [static/assets/js/function.js](static/assets/js/function.js) inside AJAX `success` for `/add-to-cart/`
+- `begin_checkout` -> [templates/core/checkout.html](templates/core/checkout.html)
+- `purchase` -> [templates/core/payment-completed.html](templates/core/payment-completed.html)
+
+## 2. File map (exact integration points)
+
+- Product detail data prep via Django `json_script`:
+  - [templates/core/product-detail.html](templates/core/product-detail.html)
+- Cart AJAX tracking:
+  - [static/assets/js/function.js](static/assets/js/function.js)
+- Checkout event payload from `order_items`:
+  - [templates/core/checkout.html](templates/core/checkout.html)
+- Purchase event + duplicate guard (`sessionStorage`):
+  - [templates/core/payment-completed.html](templates/core/payment-completed.html)
+- Payment status gating logic (prevents false purchases):
+  - [core/views.py](core/views.py) in `create_checkout_session` + `payment_completed_view`
+
+## 3. Event payload contract used here
+
+### `view_item`
+- `currency: "CHF"`
+- `value: <product price>`
+- `items: [{ item_id, item_name, item_category, price, quantity }]`
+
+### `add_to_cart`
+- Triggered only after successful AJAX response.
+- `currency: "CHF"`
+- `value: price * quantity`
+- `items: [{ item_id, item_name, price, quantity }]`
+
+### `begin_checkout`
+- Fired on checkout page load.
+- `currency: "CHF"`
+- `value: <order.price>`
+- `items` generated from `order_items`.
+
+### `purchase`
+- Fired only on paid orders.
+- `transaction_id: order.oid`
+- `currency: "CHF"`
+- `value: order.price`
+- `items` generated from `order_items`.
+- Client dedup key: `ga4_purchase_sent_<transaction_id>` in `sessionStorage`.
+
+## 4. Payment flow safeguards for clean analytics
+
+- Stripe `cancel_url` now routes to `payment-failed` (not completed page).
+- `payment_completed_view` marks order paid only if one of:
+  - Stripe `session_id` exists, or
+  - PayPal query `status=COMPLETED`.
+- If order is not paid, user is redirected to `payment-failed`.
+
+Result: much lower risk of inflated/false `purchase` events.
+
+## 5. GTM/GA4 prerequisite
+
+Make sure your GTM container snippet is loaded in the base layout:
+
+- Recommended file: [templates/partials/base.html](templates/partials/base.html)
+- If GTM is not loaded, `dataLayer.push(...)` runs but GA4 will not receive events.
+
+## 6. Quick test checklist (DebugView)
+
+1. Open GTM Preview mode.
+2. Open product detail page -> confirm `view_item`.
+3. Click Add to Cart -> confirm `add_to_cart` after AJAX success.
+4. Open checkout page -> confirm `begin_checkout`.
+5. Complete payment -> confirm exactly one `purchase` with correct `transaction_id`.
+6. Reload success page -> purchase should not fire again in same browser session.
+
+## 7. Common pitfalls
+
+- Wrong template variable names in detail page (`p` vs `product`) cause empty payload fields.
+- Inline HTML `onclick` for cart tracking is wrong in this project; cart uses AJAX in `function.js`.
+- Sending `purchase` on unpaid/cancel paths corrupts ROAS and conversion reports.
 
 User
 ↓
