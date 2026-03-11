@@ -85,7 +85,7 @@
         </div>
     </main>
 
-    <script src="https://www.paypal.com/sdk/js?client-id=test&currency=USD"></script>
+    <script src="https://www.paypal.com/sdk/js?client-id=test&currency=CHF"></script>
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://js.stripe.com/v3/"></script>
 
@@ -122,7 +122,7 @@
 
         try {
             checkoutButton.addEventListener("click", function () {
-            var email = "{{booking.email}}";
+            var email = "{{ order.email|default:''|escapejs }}";
 
             checkoutButton.innerHTML = "Processing <i class='fas fa-spinner fa-spin'></i>";
 
@@ -154,6 +154,28 @@
         }
     </script>
 
+<script>
+  window.dataLayer = window.dataLayer || [];
+  var checkoutItems = [];
+
+  {% for o in order_items %}
+  checkoutItems.push({
+    item_id: "{{ o.invoice_no|escapejs }}",
+    item_name: "{{ o.item|escapejs }}",
+    price: parseFloat("{{ o.price }}"),
+    quantity: parseInt("{{ o.qty }}", 10)
+  });
+  {% endfor %}
+
+  window.dataLayer.push({
+    event: "begin_checkout",
+    ecommerce: {
+      currency: "CHF",
+      value: parseFloat("{{ order.price }}"),
+      items: checkoutItems
+    }
+  });
+</script>
 
 {% endblock content %}
     

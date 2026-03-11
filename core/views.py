@@ -355,7 +355,7 @@ def create_checkout_session(request, oid):
         line_items = [
             {
                 'price_data': {
-                    'currency': 'USD',
+                    'currency': 'CHF',
                     'product_data': {
                         'name': order.full_name
                     },
@@ -366,7 +366,7 @@ def create_checkout_session(request, oid):
         ],
         mode = 'payment',
         success_url = request.build_absolute_uri(reverse("core:payment-completed", args=[order.oid])) + "?session_id={CHECKOUT_SESSION_ID}",
-        cancel_url = request.build_absolute_uri(reverse("core:payment-completed", args=[order.oid]))
+        cancel_url = request.build_absolute_uri(reverse("core:payment-failed"))
     )
 
     order.paid_status = False
@@ -420,13 +420,22 @@ def checkout(request, oid):
 @login_required
 def payment_completed_view(request, oid):
     order = CartOrder.objects.get(oid=oid)
-    
-    if order.paid_status == False:
+    order_items = CartOrderProducts.objects.filter(order=order)
+
+    stripe_session_id = request.GET.get("session_id")
+    paypal_status = (request.GET.get("status") or "").upper()
+    payment_confirmed = bool(stripe_session_id) or paypal_status == "COMPLETED"
+
+    if payment_confirmed and order.paid_status == False:
         order.paid_status = True
         order.save()
+
+    if not order.paid_status:
+        return redirect("core:payment-failed")
         
     context = {
         "order": order,
+        "order_items": order_items,
         "stripe_publishable_key": settings.STRIPE_PUBLIC_KEY,
 
     }

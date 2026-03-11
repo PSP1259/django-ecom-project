@@ -178,6 +178,26 @@ $(document).ready(function () {
             },
             dataType: "json",
             success: function (response) {
+                const parsedPrice = parseFloat(productPrice) || 0;
+                const parsedQuantity = parseInt(quantity, 10) || 1;
+
+                window.dataLayer = window.dataLayer || [];
+                window.dataLayer.push({
+                    event: "add_to_cart",
+                    ecommerce: {
+                        currency: "CHF",
+                        value: parsedPrice * parsedQuantity,
+                        items: [
+                            {
+                                item_id: productId,
+                                item_name: productTitle || "",
+                                price: parsedPrice,
+                                quantity: parsedQuantity
+                            }
+                        ]
+                    }
+                });
+
                 thisVal.html("<i class='fas fa-check-circle'></i>");
                 $(".cart-items-count").text(response.totalcartitems);
                 renderMiniCartDropdown(response.data);

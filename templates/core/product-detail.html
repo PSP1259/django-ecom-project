@@ -654,4 +654,35 @@
             </div>
         </div>
     </main>
+
+<!-- GA4 Ecommerce Data -->
+{{ p.price|json_script:"prod-price" }}
+{{ p.id|json_script:"prod-id" }}
+{{ p.title|json_script:"prod-title" }}
+{{ p.category.title|json_script:"prod-category" }}
+
+<script>
+  const price = parseFloat(JSON.parse(document.getElementById("prod-price").textContent));
+  const id = JSON.parse(document.getElementById("prod-id").textContent);
+  const title = JSON.parse(document.getElementById("prod-title").textContent);
+  const category = JSON.parse(document.getElementById("prod-category").textContent);
+
+  window.dataLayer = window.dataLayer || [];
+  window.dataLayer.push({
+    event: "view_item",
+    ecommerce: {
+      currency: "CHF",
+      value: price,
+      items: [
+        {
+          item_id: id,
+          item_name: title,
+          item_category: category,
+          price: price,
+          quantity: 1
+        }
+      ]
+    }
+  });
+</script>
 {% endblock content %}
