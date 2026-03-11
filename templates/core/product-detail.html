@@ -32,17 +32,17 @@
                                                 <figure class="border-radius-10">
                                                     <img src="{% if p.image %}{{ p.image.url }}{% else %}{% static 'assets/imgs/shop/product-1-1.jpg' %}{% endif %}" alt="product image" />
                                                 </figure>
-                                                {% for p in p_image %}
+                                                {% for img in p_image %}
                                                 <figure class="border-radius-10">
-                                                    <img src="{% if p.images %}{{ p.images.url }}{% else %}{% static 'assets/imgs/shop/product-1-1.jpg' %}{% endif %}" alt="product image" />
+                                                    <img src="{% if img.images %}{{ img.images.url }}{% else %}{% static 'assets/imgs/shop/product-1-1.jpg' %}{% endif %}" alt="product image" />
                                                 </figure>
                                                {% endfor %}
                                             </div>
                                             <!-- THUMBNAILS -->
                                             <div class="slider-nav-thumbnails">
                                                 <div><img style="width: 140px; height: 140px; object-fit: cover;"  src="{% if p.image %}{{ p.image.url }}{% else %}{% static 'assets/imgs/shop/product-1-1.jpg' %}{% endif %}" alt="product image" /></div>
-                                                {% for p in p_image %}
-                                                <div><img style="width: 140px; height: 140px; object-fit: cover;" src="{% if p.images %}{{ p.images.url }}{% else %}{% static 'assets/imgs/shop/product-1-1.jpg' %}{% endif %}" alt="product image" /></div>
+                                                {% for img in p_image %}
+                                                <div><img style="width: 140px; height: 140px; object-fit: cover;" src="{% if img.images %}{{ img.images.url }}{% else %}{% static 'assets/imgs/shop/product-1-1.jpg' %}{% endif %}" alt="product image" /></div>
                                                 {% endfor %}
                                             </div>
                                         </div>
@@ -388,59 +388,59 @@
                                     {% endif %}
                                     <div class="col-12">
                                         <div class="row related-products">
-                                            {% for p in products %}
+                                            {% for related in products %}
                                             <div class="col-lg-3 col-md-4 col-12 col-sm-6">
                                                 <div class="product-cart-wrap mb-30">
                                                     <div class="product-img-action-wrap">
                                                         <div class="product-img product-img-zoom">
-                                                            <a href="{% url 'core:product-detail' p.pid %}">
-                                                                <img class="default-img" src="{% if p.image %}{{ p.image.url }}{% else %}{% static 'assets/imgs/shop/product-1-1.jpg' %}{% endif %}" alt="" style="height: 280px; width: 280px; object-fit: cover;"   />
-                                                                <img class="hover-img" src="{% if p.image %}{{ p.image.url }}{% else %}{% static 'assets/imgs/shop/product-1-1.jpg' %}{% endif %}" alt=""  style="height: 280px; width: 280px; object-fit: cover;"  />
+                                                            <a href="{% url 'core:product-detail' related.pid %}">
+                                                                <img class="default-img" src="{% if related.image %}{{ related.image.url }}{% else %}{% static 'assets/imgs/shop/product-1-1.jpg' %}{% endif %}" alt="" style="height: 280px; width: 280px; object-fit: cover;"   />
+                                                                <img class="hover-img" src="{% if related.image %}{{ related.image.url }}{% else %}{% static 'assets/imgs/shop/product-1-1.jpg' %}{% endif %}" alt=""  style="height: 280px; width: 280px; object-fit: cover;"  />
 
                                                             </a>
                                                         </div>
                                                         <div class="product-action-1">
-                                                            <a aria-label="Add To Wishlist"  class="action-btn add-to-wishlist" data-product-item="{{p.id}}"><i class="fi-rs-heart"></i></a>
+                                                            <a aria-label="Add To Wishlist"  class="action-btn add-to-wishlist" data-product-item="{{related.id}}"><i class="fi-rs-heart"></i></a>
                                                             <!-- <a aria-label="Compare" class="action-btn" href="shop-compare.html"><i class="fi-rs-shuffle"></i></a> -->
-                                                            <a href="{% url 'core:product-detail' p.pid %}" class="action-btn"><i class="fi-rs-eye"></i></a>
+                                                            <a href="{% url 'core:product-detail' related.pid %}" class="action-btn"><i class="fi-rs-eye"></i></a>
                                                         </div>
                                                         <div class="product-badges product-badges-position product-badges-mrg">
-                                                            <span class="hot">-{{p.get_precentage|floatformat:0}}%</span>
+                                                            <span class="hot">-{{related.get_precentage|floatformat:0}}%</span>
                                                         </div>
                                                     </div>
                                                     <div class="product-content-wrap">
                                                         <div class="product-category">
-                                                            <a href="{% url 'core:product-detail' p.pid %}">{{ p.category.title }}</a>
+                                                            <a href="{% url 'core:product-detail' related.pid %}">{{ related.category.title }}</a>
                                                         </div>
-                                                        <h2><a href="shop-product-right.html">{{ p.title }}</a></h2>
+                                                        <h2><a href="shop-product-right.html">{{ related.title }}</a></h2>
                                                         <div class="product-rate-cover">
                                                             <i class="fas fa-star text-warning"></i>
-                                                            <span class="font-small ml-5 text-muted"> ({{ p.reviews.all.count }})</span>
+                                                            <span class="font-small ml-5 text-muted"> ({{ related.reviews.all.count }})</span>
 
                                                         </div>
                                                         <div>
-                                                            {% if p.vendor %}
-                                                            <span class="font-small text-muted">By <a href="{% url 'core:vendor-detail' p.vendor.vid %}">{{p.vendor.title}}</a></span>
+                                                            {% if related.vendor %}
+                                                            <span class="font-small text-muted">By <a href="{% url 'core:vendor-detail' related.vendor.vid %}">{{related.vendor.title}}</a></span>
                                                             {% else %}  
                                                             <span class="font-small text-muted">By <a href="">Destiny Franks</a></span>
                                                             {% endif %}
                                                         </div>
                                                         <div class="product-card-bottom">
                                                             <div class="product-price">
-                                                                <span>$</span> <span class="current-product-price-{{ p.id }}">{{p.price}}</span>
-                                                                <span class="old-price">${{p.old_price}}</span>
+                                                                <span>$</span> <span class="current-product-price-{{ related.id }}">{{related.price}}</span>
+                                                                <span class="old-price">${{related.old_price}}</span>
                                                             </div>
                                                             <div class="add-cart">
-                                                                <input type="hidden" value="1" id="product-quantity" class="product-quantity-{{ p.id }}">
-                                                                <input type="hidden" class="product-pid-{{ p.id }}" value="{{ p.pid }}">
-                                                                <input type="hidden" class="product-image-{{ p.id }}" value="{% if p.image %}{{ p.image.url }}{% else %}{% static 'assets/imgs/shop/product-1-1.jpg' %}{% endif %}">
-                                                                <input type="hidden" class="product-id-{{ p.id }}" value="{{ p.id }}">
-                                                                <input type="hidden" class="product-title-{{ p.id }}" value="{{ p.title }}">
+                                                                <input type="hidden" value="1" id="product-quantity" class="product-quantity-{{ related.id }}">
+                                                                <input type="hidden" class="product-pid-{{ related.id }}" value="{{ related.pid }}">
+                                                                <input type="hidden" class="product-image-{{ related.id }}" value="{% if related.image %}{{ related.image.url }}{% else %}{% static 'assets/imgs/shop/product-1-1.jpg' %}{% endif %}">
+                                                                <input type="hidden" class="product-id-{{ related.id }}" value="{{ related.id }}">
+                                                                <input type="hidden" class="product-title-{{ related.id }}" value="{{ related.title }}">
                                                                 <div class="d-flex">
-                                                                    <button class="add add-to-cart-btn" data-index="{{ p.id }}" style="border: none;" id="add-to-cart-btn"><i class="fi-rs-shopping-cart mr-5"></i>Add</button>
-                                                                    <button style="border: none; background: none;" class="add-to-wishlist" data-product-item="{{p.id}}"><i class="fi-rs-heart" style="fill: aqua;"></i></button>
+                                                                    <button class="add add-to-cart-btn" data-index="{{ related.id }}" style="border: none;" id="add-to-cart-btn"><i class="fi-rs-shopping-cart mr-5"></i>Add</button>
+                                                                    <button style="border: none; background: none;" class="add-to-wishlist" data-product-item="{{related.id}}"><i class="fi-rs-heart" style="fill: aqua;"></i></button>
                                                                 </div>
-                                                                <!-- <button class="add add-to-cart-btn" data-index="{{ p.id }}" style="border: none;" id="add-to-cart-btn"><i class="fi-rs-shopping-cart mr-5"></i>Add</button> -->
+                                                                <!-- <button class="add add-to-cart-btn" data-index="{{ related.id }}" style="border: none;" id="add-to-cart-btn"><i class="fi-rs-shopping-cart mr-5"></i>Add</button> -->
                                                             </div>
                                                         </div>
                                                     </div>
@@ -662,22 +662,48 @@
 {{ p.category.title|json_script:"prod-category" }}
 
 <script>
-  window.dataLayer = window.dataLayer || [];
-  window.dataLayer.push({
-    event: "view_item",
-    ecommerce: {
-      currency: "CHF",
-      value: parseFloat("{{ p.price }}"),
-      items: [{
-        item_id: "{{ p.id|escapejs }}",
-        item_name: "{{ p.title|escapejs }}",
-        item_category: "{{ p.category.title|escapejs }}",
-        price: parseFloat("{{ p.price }}"),
-        quantity: 1
-      }]
-    }
-  });
+  (function () {
+    const priceEl = document.getElementById("prod-price");
+    const idEl = document.getElementById("prod-id");
+    const titleEl = document.getElementById("prod-title");
+    const categoryEl = document.getElementById("prod-category");
 
-  console.log("view_item pushed", window.dataLayer);
+    // Prefer json_script values; fallback keeps tracking alive if IDs are missing.
+    const price = priceEl
+      ? parseFloat(JSON.parse(priceEl.textContent))
+      : parseFloat("{{ p.price }}");
+    const id = idEl
+      ? JSON.parse(idEl.textContent)
+      : "{{ p.id|escapejs }}";
+    const title = titleEl
+      ? JSON.parse(titleEl.textContent)
+      : "{{ p.title|escapejs }}";
+    const category = categoryEl
+      ? JSON.parse(categoryEl.textContent)
+      : "{{ p.category.title|escapejs }}";
+
+    if (!Number.isFinite(price)) {
+      console.warn("GA4 view_item skipped: invalid price");
+      return;
+    }
+
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: "view_item",
+      ecommerce: {
+        currency: "CHF",
+        value: price,
+        items: [
+          {
+            item_id: id,
+            item_name: title,
+            item_category: category,
+            price: price,
+            quantity: 1
+          }
+        ]
+      }
+    });
+  })();
 </script>
 {% endblock content %}
