@@ -1,3 +1,42 @@
+
+
+User
+↓
+Cloudflare DNS (https://siete.ch)
+↓
+Redirect Rule
+↓
+https://www.siete.ch
+↓
+Cloudflare Access Login
+↓
+Railway
+↓
+Django Shop
+
+
+# Cloudflare Setup (Pre-Launch Access Protection)
+
+- Added domain `siete.ch` to Cloudflare (Free Plan)
+- Updated domain nameservers at Hostpoint to Cloudflare nameservers
+- Configured DNS records:
+  - `CNAME www → <railway-app>.up.railway.app` (Proxied)
+  - `CNAME siete.ch → <railway-app>.up.railway.app` (Proxied)
+  - Railway verification TXT record `_railway-verify.www`
+- Enabled Cloudflare proxy for Railway CNAME records
+- Created Redirect Rule:
+  - `https://siete.ch/* → https://www.siete.ch/${1}` (301)
+- Enabled **Cloudflare Zero Trust Access**
+- Created Access Application for:
+  - `www.siete.ch/*`
+- Added Access Policy:
+  - Action: `Allow`
+  - Rule: `Emails`
+  - Allowed users: internal testing emails
+- Login method:
+  - `One-time PIN (email authentication)`
+
+
 # Django ecom: Updated Project README
 
 > Last refresh: 2026-03-06
@@ -615,5 +654,6 @@
 
 - `Procfile` web: gunicorn ecom.wsgi --log-file -
 - Test modules exist but contain little/no real automated coverage.
-- Project contains both custom code and many third-party static assets; upgrades should isolate custom overrides.#   d j a n o g - r a i l w a y  
+- Project contains both custom code and many third-party static assets; upgrades should isolate custom overrides.#   d j a n o g - r a i l w a y 
+ 
  
