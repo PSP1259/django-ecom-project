@@ -1,7 +1,13 @@
 # Ecommerce Tracking (GA4) - Quick Setup (Top Priority)
 
-> Last refresh: 2026-03-11  
-> Tracking currency in this project: `CHF`
+Methods:
+
+[] Plugin
+[] gtag.js
+[x] GTM DOM
+[x] GTM DataLayer
+[] Server Side
+[] Hybrid
 
 ## 1. What is already implemented
 

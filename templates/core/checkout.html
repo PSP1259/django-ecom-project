@@ -157,24 +157,46 @@
 <script>
   window.dataLayer = window.dataLayer || [];
   var checkoutItems = [];
+  var beginCheckoutStorageKey = "ga4_begin_checkout_sent_{{ order.oid|escapejs }}";
+
+  function normalizeOrderItemId(rawId) {
+    var idValue = String(rawId || "");
+    var match = idValue.match(/^INVOICE_NO-\d+-(.+)$/);
+    return match && match[1] ? match[1] : idValue;
+  }
 
   {% for o in order_items %}
   checkoutItems.push({
-    item_id: "{{ o.invoice_no|escapejs }}",
+    item_id: normalizeOrderItemId("{{ o.invoice_no|escapejs }}"),
     item_name: "{{ o.item|escapejs }}",
     price: parseFloat("{{ o.price }}"),
     quantity: parseInt("{{ o.qty }}", 10)
   });
   {% endfor %}
 
-  window.dataLayer.push({
-    event: "begin_checkout",
-    ecommerce: {
-      currency: "CHF",
-      value: parseFloat("{{ order.price }}"),
-      items: checkoutItems
+  var beginCheckoutAlreadyTracked = false;
+  try {
+    beginCheckoutAlreadyTracked = window.sessionStorage.getItem(beginCheckoutStorageKey) === "1";
+  } catch (error) {
+    beginCheckoutAlreadyTracked = false;
+  }
+
+  if (!beginCheckoutAlreadyTracked) {
+    window.dataLayer.push({
+      event: "begin_checkout",
+      ecommerce: {
+        currency: "CHF",
+        value: parseFloat("{{ order.price }}"),
+        items: checkoutItems
+      }
+    });
+
+    try {
+      window.sessionStorage.setItem(beginCheckoutStorageKey, "1");
+    } catch (error) {
+      // Ignore storage issues.
     }
-  });
+  }
 </script>
 
 {% endblock content %}

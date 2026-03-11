@@ -332,7 +332,7 @@ def save_checkout_info(request):
     for p_id, item in request.session["cart_data_obj"].items():
         CartOrderProducts.objects.create(
             order=order,
-            invoice_no="INVOICE_NO-" + str(order.id),
+            invoice_no="INVOICE_NO-" + str(order.id) + "-" + str(p_id),
             item=item["title"],
             image=item["image"],
             qty=item["qty"],
