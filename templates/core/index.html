@@ -86,9 +86,11 @@
                                                     <!-- <a aria-label="Compare" class="action-btn" href="shop-compare.html"><i class="fi-rs-shuffle"></i></a> -->
                                                     <a href="{% url 'core:product-detail' p.pid %}" class="action-btn"><i class="fi-rs-eye"></i></a>
                                                 </div>
+                                                {% if p.old_price and p.old_price > p.price %}
                                                 <div class="product-badges product-badges-position product-badges-mrg">
                                                     <span class="hot">-{{p.get_precentage|floatformat:0}}%</span>
                                                 </div>
+                                                {% endif %}
                                             </div>
                                             <div class="product-content-wrap">
                                                 <div class="product-category">
@@ -108,7 +110,9 @@
                                                 <div class="product-card-bottom">
                                                     <div class="product-price">
                                                         <span>$</span> <span class="current-product-price-{{ p.id }}">{{p.price}}</span>
+                                                        {% if p.old_price and p.old_price > p.price %}
                                                         <span class="old-price">${{p.old_price}}</span>
+                                                        {% endif %}
                                                     </div>
                                                     <div class="add-cart">
                                                         <input type="hidden" value="1" id="product-quantity" class="product-quantity-{{ p.id }}">

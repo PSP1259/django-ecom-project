@@ -54,7 +54,9 @@
                                     </div>
                                     <div class="col-md-6 col-sm-12 col-xs-12">
                                         <div class="detail-info pr-30 pl-30">
+                                            {% if p.old_price and p.old_price > p.price %}
                                             <span class="stock-status out-stock"> -{{p.get_precentage|floatformat:0}}% </span>
+                                            {% endif %}
                                             <h2 class="title-detail">{{p.title}}</h2>
                                             <div class="product-detail-rating">
                                                 <div class="product-rate-cover text-end">
@@ -68,8 +70,10 @@
                                                 <div class="product-price primary-color float-left">
                                                     <span class="current-price text-brand">$</span><span class="current-price text-brand current-price current-product-price-{{ p.id }}" id="current-product-price">{{p.price}}</span>
                                                     <span>
+                                                        {% if p.old_price and p.old_price > p.price %}
                                                         <span class="save-price font-md color3 ml-15">-{{p.get_precentage|floatformat:0}}% Off</span>
-                                                    <span class="old-price font-md ml-15">${{p.old_price}}</span>
+                                                        <span class="old-price font-md ml-15">${{p.old_price}}</span>
+                                                        {% endif %}
                                                     </span>
                                                 </div>
                                             </div>
@@ -411,9 +415,11 @@
                                                             <!-- <a aria-label="Compare" class="action-btn" href="shop-compare.html"><i class="fi-rs-shuffle"></i></a> -->
                                                             <a href="{% url 'core:product-detail' related.pid %}" class="action-btn"><i class="fi-rs-eye"></i></a>
                                                         </div>
+                                                        {% if related.old_price and related.old_price > related.price %}
                                                         <div class="product-badges product-badges-position product-badges-mrg">
                                                             <span class="hot">-{{related.get_precentage|floatformat:0}}%</span>
                                                         </div>
+                                                        {% endif %}
                                                     </div>
                                                     <div class="product-content-wrap">
                                                         <div class="product-category">
@@ -435,7 +441,9 @@
                                                         <div class="product-card-bottom">
                                                             <div class="product-price">
                                                                 <span>$</span> <span class="current-product-price-{{ related.id }}">{{related.price}}</span>
+                                                                {% if related.old_price and related.old_price > related.price %}
                                                                 <span class="old-price">${{related.old_price}}</span>
+                                                                {% endif %}
                                                             </div>
                                                             <div class="add-cart">
                                                                 <input type="hidden" value="1" id="product-quantity" class="product-quantity-{{ related.id }}">
