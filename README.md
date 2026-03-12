@@ -1,4 +1,4 @@
-# Ecommerce Tracking (GA4) - Quick Setup (Top Priority)
+# Ecommerce Tracking (GA4) + Checkout UX - Quick Setup (Top Priority)
 
 Methods:
 
@@ -9,86 +9,6 @@ Methods:
 [] Server Side
 [] Hybrid
 
-## 1. What is already implemented
-
-This project now sends the 4 required GA4 ecommerce events with `currency`, `value`, and `items`:
-
-- `view_item` -> [templates/core/product-detail.html](templates/core/product-detail.html)
-- `add_to_cart` -> [static/assets/js/function.js](static/assets/js/function.js) inside AJAX `success` for `/add-to-cart/`
-- `begin_checkout` -> [templates/core/checkout.html](templates/core/checkout.html)
-- `purchase` -> [templates/core/payment-completed.html](templates/core/payment-completed.html)
-
-## 2. File map (exact integration points)
-
-- Product detail data prep via Django `json_script`:
-  - [templates/core/product-detail.html](templates/core/product-detail.html)
-- Cart AJAX tracking:
-  - [static/assets/js/function.js](static/assets/js/function.js)
-- Checkout event payload from `order_items`:
-  - [templates/core/checkout.html](templates/core/checkout.html)
-- Purchase event + duplicate guard (`sessionStorage`):
-  - [templates/core/payment-completed.html](templates/core/payment-completed.html)
-- Payment status gating logic (prevents false purchases):
-  - [core/views.py](core/views.py) in `create_checkout_session` + `payment_completed_view`
-
-## 3. Event payload contract used here
-
-### `view_item`
-- `currency: "CHF"`
-- `value: <product price>`
-- `items: [{ item_id, item_name, item_category, price, quantity }]`
-
-### `add_to_cart`
-- Triggered only after successful AJAX response.
-- `currency: "CHF"`
-- `value: price * quantity`
-- `items: [{ item_id, item_name, price, quantity }]`
-
-### `begin_checkout`
-- Fired on checkout page load.
-- `currency: "CHF"`
-- `value: <order.price>`
-- `items` generated from `order_items`.
-
-### `purchase`
-- Fired only on paid orders.
-- `transaction_id: order.oid`
-- `currency: "CHF"`
-- `value: order.price`
-- `items` generated from `order_items`.
-- Client dedup key: `ga4_purchase_sent_<transaction_id>` in `sessionStorage`.
-
-## 4. Payment flow safeguards for clean analytics
-
-- Stripe `cancel_url` now routes to `payment-failed` (not completed page).
-- `payment_completed_view` marks order paid only if one of:
-  - Stripe `session_id` exists, or
-  - PayPal query `status=COMPLETED`.
-- If order is not paid, user is redirected to `payment-failed`.
-
-Result: much lower risk of inflated/false `purchase` events.
-
-## 5. GTM/GA4 prerequisite
-
-Make sure your GTM container snippet is loaded in the base layout:
-
-- Recommended file: [templates/partials/base.html](templates/partials/base.html)
-- If GTM is not loaded, `dataLayer.push(...)` runs but GA4 will not receive events.
-
-## 6. Quick test checklist (DebugView)
-
-1. Open GTM Preview mode.
-2. Open product detail page -> confirm `view_item`.
-3. Click Add to Cart -> confirm `add_to_cart` after AJAX success.
-4. Open checkout page -> confirm `begin_checkout`.
-5. Complete payment -> confirm exactly one `purchase` with correct `transaction_id`.
-6. Reload success page -> purchase should not fire again in same browser session.
-
-## 7. Common pitfalls
-
-- Wrong template variable names in detail page (`p` vs `product`) cause empty payload fields.
-- Inline HTML `onclick` for cart tracking is wrong in this project; cart uses AJAX in `function.js`.
-- Sending `purchase` on unpaid/cancel paths corrupts ROAS and conversion reports.
 
 User
 ↓
@@ -103,6 +23,112 @@ Cloudflare Access Login
 Railway
 ↓
 Django Shop
+
+
+## 1. What is already implemented
+
+This project now sends the 4 required GA4 ecommerce events with `currency`, `value`, and `items`:
+
+- `view_item` -> [templates/core/product-detail.html](templates/core/product-detail.html)
+- `add_to_cart` -> [static/assets/js/function.js](static/assets/js/function.js) inside AJAX `success` for `/add-to-cart/`
+- `begin_checkout` -> [templates/core/checkout.html](templates/core/checkout.html)
+- `purchase` -> [templates/core/payment-completed.html](templates/core/payment-completed.html)
+
+Status: GTM Preview + GA4 Debug hits confirmed for all four events.
+
+## 2. File map (exact integration points)
+
+- Product detail data prep via Django `json_script`:
+  - [templates/core/product-detail.html](templates/core/product-detail.html)
+- Cart AJAX tracking:
+  - [static/assets/js/function.js](static/assets/js/function.js)
+- Checkout event payload from server-built `tracking_items`:
+  - [templates/core/checkout.html](templates/core/checkout.html)
+- Tracking item builder + order access checks:
+  - [core/views.py](core/views.py) in `_build_tracking_items(...)` and `_order_is_accessible(...)`
+- Purchase event + duplicate guard (`sessionStorage`):
+  - [templates/core/payment-completed.html](templates/core/payment-completed.html)
+- Payment status gating logic (prevents false purchases):
+  - [core/views.py](core/views.py) in `create_checkout_session` + `payment_completed_view`
+- Header mini preview data (wishlist/cart):
+  - [core/context_processor.py](core/context_processor.py)
+  - [templates/partials/base.html](templates/partials/base.html)
+- Cart page checkout mode toggle (`account` vs `guest` on same page):
+  - [templates/core/cart.html](templates/core/cart.html)
+  - [core/views.py](core/views.py) in `save_checkout_info`
+
+## 3. Event payload contract used here
+
+### `view_item`
+- `currency: "CHF"`
+- `value: <product price>`
+- `items: [{ item_id, item_name, item_category, item_brand, item_variant, price, quantity }]`
+
+### `add_to_cart`
+- Triggered only after successful AJAX response.
+- `currency: "CHF"`
+- `value: price * quantity`
+- `items: [{ item_id, item_name, item_category, item_brand, item_variant, price, quantity }]`
+
+### `begin_checkout`
+- Fired on checkout page load.
+- `currency: "CHF"`
+- `value: <order.price>`
+- `items` generated from `tracking_items`.
+- Client dedup key: `ga4_begin_checkout_sent_<order.oid>` in `sessionStorage`.
+
+### `purchase`
+- Fired only on paid orders.
+- `transaction_id: order.oid`
+- `currency: "CHF"`
+- `value: order.price`
+- `items` generated from `tracking_items`.
+- Client dedup key: `ga4_purchase_sent_<transaction_id>` in `sessionStorage`.
+
+## 4. Payment flow safeguards for clean analytics
+
+- Stripe `cancel_url` now routes to `payment-failed` (not completed page).
+- `payment_completed_view` marks order paid only if one of:
+  - Stripe `session_id` exists, or
+  - PayPal query `status=COMPLETED`.
+- If order is not paid, user is redirected to `payment-failed`.
+- Checkout/session/order endpoints now verify order access (`_order_is_accessible`) to avoid cross-order access.
+
+Result: much lower risk of inflated/false `purchase` events.
+
+## 5. Checkout + header UX updates (implemented)
+
+- Wishlist hover preview now works like mini-cart (desktop + mobile header):
+  - live count via `.wishlist-items-count`
+  - preview list from `mini_wishlist_items`
+- Cart page has inline checkout mode toggle (no extra page):
+  - `account` mode: login required
+  - `guest` mode: one-time checkout directly
+  - entered form data is preserved in session during auth redirect (`pending_checkout_form`)
+- Product discount UI cleanup:
+  - discount badge and struck `old-price` render only when `old_price > price`
+  - if prices are equal, no fake discount is shown
+
+## 6. GTM/GA4 prerequisite
+
+Make sure your GTM container snippet is loaded in the base layout:
+
+- Recommended file: [templates/partials/base.html](templates/partials/base.html)
+- If GTM is not loaded, `dataLayer.push(...)` runs but GA4 will not receive events.
+
+## 7. Quick test checklist (DebugView)
+
+1. Open GTM Preview mode.
+2. Open product detail page -> confirm `view_item`.
+3. Click Add to Cart -> confirm `add_to_cart` after AJAX success.
+4. Open checkout page -> confirm `begin_checkout`.
+5. Complete payment -> confirm exactly one `purchase` with correct `transaction_id`.
+6. Reload success page -> purchase should not fire again in same browser session.
+7. Toggle cart checkout mode:
+   - checked `account` + signed-out user -> redirect to sign-in with `next`
+   - unchecked `guest` -> direct one-time checkout flow
+8. Validate pricing UI:
+   - if `old_price == price`, no `%` badge and no `old-price` strike-through
 
 
 # Cloudflare Setup (Pre-Launch Access Protection)
