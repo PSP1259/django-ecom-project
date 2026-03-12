@@ -87,6 +87,9 @@
                                                         <input type="hidden" class="product-image-{{ p.id }}" value="{% if p.image %}{{ p.image.url }}{% else %}{% static 'assets/imgs/shop/product-1-1.jpg' %}{% endif %}">
                                                         <input type="hidden" class="product-id-{{ p.id }}" value="{{ p.id }}">
                                                         <input type="hidden" class="product-title-{{ p.id }}" value="{{ p.title }}">
+                                                        <input type="hidden" class="product-category-{{ p.id }}" value="{{ p.category.title|default:'' }}">
+                                                        <input type="hidden" class="product-brand-{{ p.id }}" value="{% if p.vendor %}{{ p.vendor.title }}{% endif %}">
+                                                        <input type="hidden" class="product-variant-{{ p.id }}" value="{{ p.type|default:'' }}">
 
                                                     
                                                     <button type="submit" class="button button-add-to-cart add-to-cart-btn" data-index="{{ p.id }}" id="add-to-cart-btn"><i class="fi-rs-shopping-cart"></i>Add to cart</button>
@@ -440,6 +443,9 @@
                                                                 <input type="hidden" class="product-image-{{ related.id }}" value="{% if related.image %}{{ related.image.url }}{% else %}{% static 'assets/imgs/shop/product-1-1.jpg' %}{% endif %}">
                                                                 <input type="hidden" class="product-id-{{ related.id }}" value="{{ related.id }}">
                                                                 <input type="hidden" class="product-title-{{ related.id }}" value="{{ related.title }}">
+                                                                <input type="hidden" class="product-category-{{ related.id }}" value="{{ related.category.title|default:'' }}">
+                                                                <input type="hidden" class="product-brand-{{ related.id }}" value="{% if related.vendor %}{{ related.vendor.title }}{% endif %}">
+                                                                <input type="hidden" class="product-variant-{{ related.id }}" value="{{ related.type|default:'' }}">
                                                                 <div class="d-flex">
                                                                     <button class="add add-to-cart-btn" data-index="{{ related.id }}" style="border: none;" id="add-to-cart-btn"><i class="fi-rs-shopping-cart mr-5"></i>Add</button>
                                                                     <button style="border: none; background: none;" class="add-to-wishlist" data-product-item="{{related.id}}"><i class="fi-rs-heart" style="fill: aqua;"></i></button>
@@ -664,6 +670,8 @@
 {{ p.id|json_script:"prod-id" }}
 {{ p.title|json_script:"prod-title" }}
 {{ p.category.title|json_script:"prod-category" }}
+{{ p.vendor.title|default:""|json_script:"prod-brand" }}
+{{ p.type|default:""|json_script:"prod-variant" }}
 
 <script>
   (function () {
@@ -671,6 +679,8 @@
     const idEl = document.getElementById("prod-id");
     const titleEl = document.getElementById("prod-title");
     const categoryEl = document.getElementById("prod-category");
+    const brandEl = document.getElementById("prod-brand");
+    const variantEl = document.getElementById("prod-variant");
 
     // Prefer json_script values; fallback keeps tracking alive if IDs are missing.
     const price = priceEl
@@ -685,6 +695,12 @@
     const category = categoryEl
       ? JSON.parse(categoryEl.textContent)
       : "{{ p.category.title|escapejs }}";
+    const brand = brandEl
+      ? JSON.parse(brandEl.textContent)
+      : "{{ p.vendor.title|default:''|escapejs }}";
+    const variant = variantEl
+      ? JSON.parse(variantEl.textContent)
+      : "{{ p.type|default:''|escapejs }}";
 
     if (!Number.isFinite(price)) {
       console.warn("GA4 view_item skipped: invalid price");
@@ -702,6 +718,8 @@
             item_id: id,
             item_name: title,
             item_category: category,
+            item_brand: brand,
+            item_variant: variant,
             price: price,
             quantity: 1
           }

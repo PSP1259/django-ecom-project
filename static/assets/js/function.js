@@ -58,7 +58,7 @@ $(document).ready(function () {
     }
 
     function renderMiniCartDropdown(cartData) {
-        const dropdowns = $(".cart-dropdown-wrap.cart-dropdown-hm2").not(".account-dropdown");
+        const dropdowns = $(".mini-cart-dropdown");
         if (!dropdowns.length) {
             return;
         }
@@ -161,6 +161,9 @@ $(document).ready(function () {
         const productPrice = ($(".current-product-price-" + index).first().text() || "").replace(/[^0-9.]/g, "");
         const productPid = $(".product-pid-" + index).val();
         const productImage = $(".product-image-" + index).val();
+        const productCategory = ($(".product-category-" + index).val() || "").trim();
+        const productBrand = ($(".product-brand-" + index).val() || "").trim();
+        const productVariant = ($(".product-variant-" + index).val() || "").trim();
 
         if (!productId) {
             return;
@@ -174,7 +177,10 @@ $(document).ready(function () {
                 image: productImage,
                 qty: quantity,
                 title: productTitle,
-                price: productPrice
+                price: productPrice,
+                category: productCategory,
+                brand: productBrand,
+                variant: productVariant
             },
             dataType: "json",
             success: function (response) {
@@ -191,6 +197,9 @@ $(document).ready(function () {
                             {
                                 item_id: productId,
                                 item_name: productTitle || "",
+                                item_category: productCategory,
+                                item_brand: productBrand,
+                                item_variant: productVariant,
                                 price: parsedPrice,
                                 quantity: parsedQuantity
                             }
@@ -296,6 +305,15 @@ $(document).ready(function () {
                 if (response.bool !== true) {
                     thisVal.html("<i class='fi-rs-heart'></i>");
                 }
+                if (typeof response.wishlist_count !== "undefined") {
+                    $(".wishlist-items-count").text(response.wishlist_count);
+                }
+            },
+            error: function (xhr) {
+                if (xhr.status === 401) {
+                    const nextUrl = encodeURIComponent(window.location.pathname + window.location.search);
+                    window.location.href = "/user/sign-in/?next=" + nextUrl;
+                }
             }
         });
     });
@@ -313,6 +331,15 @@ $(document).ready(function () {
             dataType: "json",
             success: function (response) {
                 $("#wishlist-list").html(response.data);
+                if (typeof response.wishlist_count !== "undefined") {
+                    $(".wishlist-items-count").text(response.wishlist_count);
+                }
+            },
+            error: function (xhr) {
+                if (xhr.status === 401) {
+                    const nextUrl = encodeURIComponent(window.location.pathname + window.location.search);
+                    window.location.href = "/user/sign-in/?next=" + nextUrl;
+                }
             }
         });
     });

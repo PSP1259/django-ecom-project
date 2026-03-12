@@ -14,24 +14,16 @@
 </div>
 
 {% if order.paid_status %}
+{{ tracking_items|json_script:"purchase-tracking-items" }}
 <script>
   window.dataLayer = window.dataLayer || [];
   var purchasedItems = [];
 
-  function normalizeOrderItemId(rawId) {
-    var idValue = String(rawId || "");
-    var match = idValue.match(/^INVOICE_NO-\d+-(.+)$/);
-    return match && match[1] ? match[1] : idValue;
+  try {
+    purchasedItems = JSON.parse(document.getElementById("purchase-tracking-items").textContent || "[]");
+  } catch (error) {
+    purchasedItems = [];
   }
-
-  {% for item in order_items %}
-  purchasedItems.push({
-    item_id: normalizeOrderItemId("{{ item.invoice_no|escapejs }}"),
-    item_name: "{{ item.item|escapejs }}",
-    price: parseFloat("{{ item.price }}"),
-    quantity: parseInt("{{ item.qty }}", 10)
-  });
-  {% endfor %}
 
   var transactionId = "{{ order.oid|escapejs }}";
   var purchaseStorageKey = "ga4_purchase_sent_" + transactionId;

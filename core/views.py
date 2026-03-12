@@ -13,11 +13,106 @@ from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from paypal.standard.forms import PayPalPaymentsForm
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import get_user_model
 
 import calendar
 from django.db.models import Count, Avg
 from django.db.models.functions import ExtractMonth
 from django.core import serializers
+from urllib.parse import urlencode
+
+
+def _parse_product_id_from_invoice(invoice_no):
+    invoice_value = str(invoice_no or "")
+    suffix = invoice_value.rsplit("-", 1)[-1]
+    return int(suffix) if suffix.isdigit() else None
+
+
+def _build_tracking_items(order_items):
+    order_items_list = list(order_items)
+    parsed_ids = []
+    parsed_by_item = []
+
+    for order_item in order_items_list:
+        parsed_id = _parse_product_id_from_invoice(order_item.invoice_no)
+        parsed_by_item.append(parsed_id)
+        if parsed_id is not None:
+            parsed_ids.append(parsed_id)
+
+    products = Product.objects.filter(id__in=set(parsed_ids)).select_related("category", "vendor")
+    product_map = {product.id: product for product in products}
+
+    tracking_items = []
+    for order_item, parsed_id in zip(order_items_list, parsed_by_item):
+        product = product_map.get(parsed_id) if parsed_id is not None else None
+
+        tracking_items.append(
+            {
+                "item_id": str(parsed_id) if parsed_id is not None else str(order_item.invoice_no),
+                "item_name": order_item.item or "",
+                "item_category": product.category.title if product and product.category else "",
+                "item_brand": product.vendor.title if product and product.vendor else "",
+                "item_variant": product.type if product and product.type else "",
+                "price": float(order_item.price or 0),
+                "quantity": int(order_item.qty or 0),
+            }
+        )
+
+    return tracking_items
+
+
+def _get_checkout_initial(request):
+    profile = None
+    if request.user.is_authenticated:
+        profile = Profile.objects.filter(user=request.user).first()
+
+    initial = {
+        "checkout_mode": "account" if request.user.is_authenticated else "guest",
+        "full_name": request.user.username if request.user.is_authenticated else "",
+        "email": request.user.email if request.user.is_authenticated else "",
+        "mobile": profile.phone if profile and profile.phone else "",
+        "address": "",
+        "city": "",
+        "state": "",
+        "country": "",
+    }
+
+    pending_form = request.session.get("pending_checkout_form") or {}
+    for key in initial.keys():
+        value = pending_form.get(key)
+        if value:
+            initial[key] = value
+
+    return initial
+
+
+def _build_sign_in_redirect(next_url):
+    return "{}?{}".format(reverse("userauths:sign-in"), urlencode({"next": next_url}))
+
+
+def _get_guest_checkout_user():
+    User = get_user_model()
+    guest_email = getattr(settings, "GUEST_CHECKOUT_EMAIL", "guest.checkout@siete.local")
+    guest_user, created = User.objects.get_or_create(
+        email=guest_email,
+        defaults={
+            "username": "guest-checkout",
+            "bio": "Guest checkout user",
+            "is_active": False,
+        },
+    )
+    if created:
+        guest_user.set_unusable_password()
+        guest_user.save(update_fields=["password"])
+    return guest_user
+
+
+def _order_is_accessible(request, order):
+    if request.user.is_authenticated and order.user_id == request.user.id:
+        return True
+
+    guest_checkout_oids = request.session.get("guest_checkout_oids", [])
+    return str(order.oid) in {str(guest_oid) for guest_oid in guest_checkout_oids}
 
 
 def index(request):
@@ -221,6 +316,9 @@ def add_to_cart(request):
         'price': request.GET['price'],
         'image': request.GET['image'],
         'pid': request.GET['pid'],
+        'category': request.GET.get('category', ''),
+        'brand': request.GET.get('brand', ''),
+        'variant': request.GET.get('variant', ''),
     }
 
     if 'cart_data_obj' in request.session:
@@ -246,7 +344,14 @@ def cart_view(request):
     if 'cart_data_obj' in request.session:
         for p_id, item in request.session['cart_data_obj'].items():
             cart_total_amount += int(item['qty']) * float(item['price'])
-        return render(request, "core/cart.html", {"cart_data":request.session['cart_data_obj'], 'totalcartitems': len(request.session['cart_data_obj']), 'cart_total_amount':cart_total_amount})
+        checkout_initial = _get_checkout_initial(request)
+        context = {
+            "cart_data": request.session["cart_data_obj"],
+            "totalcartitems": len(request.session["cart_data_obj"]),
+            "cart_total_amount": cart_total_amount,
+            "checkout_initial": checkout_initial,
+        }
+        return render(request, "core/cart.html", context)
     else:
         messages.warning(request, "Your cart is empty")
         return redirect("core:index")
@@ -289,10 +394,6 @@ def update_cart(request):
 
 
 def save_checkout_info(request):
-    if not request.user.is_authenticated:
-        messages.warning(request, "Please sign in to continue checkout")
-        return redirect("userauths:sign-in")
-
     if request.method != "POST":
         messages.warning(request, "Invalid checkout request")
         return redirect("core:cart")
@@ -301,33 +402,58 @@ def save_checkout_info(request):
         messages.warning(request, "Your cart is empty")
         return redirect("core:index")
 
-    total_amount = 0
+    checkout_mode = (request.POST.get("checkout_mode") or "").strip().lower()
+    if checkout_mode not in {"account", "guest"}:
+        checkout_mode = "account" if request.user.is_authenticated else "guest"
 
-    request.session["full_name"] = request.POST.get("full_name")
-    request.session["email"] = request.POST.get("email")
-    request.session["mobile"] = request.POST.get("mobile")
-    request.session["address"] = request.POST.get("address")
-    request.session["city"] = request.POST.get("city")
-    request.session["state"] = request.POST.get("state")
-    request.session["country"] = request.POST.get("country")
+    request.session["pending_checkout_form"] = {
+        "checkout_mode": checkout_mode,
+        "full_name": request.POST.get("full_name", "").strip(),
+        "email": request.POST.get("email", "").strip(),
+        "mobile": request.POST.get("mobile", "").strip(),
+        "address": request.POST.get("address", "").strip(),
+        "city": request.POST.get("city", "").strip(),
+        "state": request.POST.get("state", "").strip(),
+        "country": request.POST.get("country", "").strip(),
+    }
+
+    if checkout_mode == "account" and not request.user.is_authenticated:
+        messages.warning(request, "Please sign in for account checkout, or uncheck account checkout.")
+        return redirect(_build_sign_in_redirect(reverse("core:cart")))
+
+    if not request.session["pending_checkout_form"]["full_name"] or not request.session["pending_checkout_form"]["email"]:
+        messages.warning(request, "Full name and email are required.")
+        return redirect("core:cart")
+
+    total_amount = 0
 
     for p_id, item in request.session["cart_data_obj"].items():
         total_amount += int(item["qty"]) * float(item["price"])
 
+    if checkout_mode == "account":
+        order_user = request.user
+    else:
+        order_user = _get_guest_checkout_user()
+
+    checkout_form = request.session["pending_checkout_form"]
     order = CartOrder.objects.create(
-        user=request.user,
+        user=order_user,
         price=total_amount,
-        full_name=request.session["full_name"],
-        email=request.session["email"],
-        phone=request.session["mobile"],
-        address=request.session["address"],
-        city=request.session["city"],
-        state=request.session["state"],
-        country=request.session["country"],
+        full_name=checkout_form["full_name"],
+        email=checkout_form["email"],
+        phone=checkout_form["mobile"],
+        address=checkout_form["address"],
+        city=checkout_form["city"],
+        state=checkout_form["state"],
+        country=checkout_form["country"],
     )
 
-    for session_key in ["full_name", "email", "mobile", "address", "city", "state", "country"]:
-        request.session.pop(session_key, None)
+    request.session.pop("pending_checkout_form", None)
+
+    if checkout_mode == "guest":
+        guest_checkout_oids = request.session.get("guest_checkout_oids", [])
+        guest_checkout_oids.append(str(order.oid))
+        request.session["guest_checkout_oids"] = list(dict.fromkeys(guest_checkout_oids))[-20:]
 
     for p_id, item in request.session["cart_data_obj"].items():
         CartOrderProducts.objects.create(
@@ -346,7 +472,10 @@ def save_checkout_info(request):
 
 @csrf_exempt
 def create_checkout_session(request, oid):
-    order = CartOrder.objects.get(oid=oid)
+    order = get_object_or_404(CartOrder, oid=oid)
+    if not _order_is_accessible(request, order):
+        return JsonResponse({"error": "Unauthorized checkout access."}, status=403)
+
     stripe.api_key = settings.STRIPE_SECRET_KEY
 
     checkout_session = stripe.checkout.Session.create(
@@ -379,10 +508,17 @@ def create_checkout_session(request, oid):
 
 
 
-@login_required
 def checkout(request, oid):
-    order = CartOrder.objects.get(oid=oid)
+    order = get_object_or_404(CartOrder, oid=oid)
+    if not _order_is_accessible(request, order):
+        if order.user_id and not request.user.is_authenticated:
+            messages.warning(request, "Please sign in to access this checkout.")
+            return redirect(_build_sign_in_redirect(reverse("core:checkout", args=[order.oid])))
+        messages.warning(request, "You cannot access this checkout.")
+        return redirect("core:cart")
+
     order_items = CartOrderProducts.objects.filter(order=order)
+    tracking_items = _build_tracking_items(order_items)
 
    
     if request.method == "POST":
@@ -411,16 +547,21 @@ def checkout(request, oid):
     context = {
         "order": order,
         "order_items": order_items,
+        "tracking_items": tracking_items,
         "stripe_publishable_key": settings.STRIPE_PUBLIC_KEY,
 
     }
     return render(request, "core/checkout.html", context)
 
 
-@login_required
 def payment_completed_view(request, oid):
-    order = CartOrder.objects.get(oid=oid)
+    order = get_object_or_404(CartOrder, oid=oid)
+    if not _order_is_accessible(request, order):
+        messages.warning(request, "You cannot access this order.")
+        return redirect("core:cart")
+
     order_items = CartOrderProducts.objects.filter(order=order)
+    tracking_items = _build_tracking_items(order_items)
 
     stripe_session_id = request.GET.get("session_id")
     paypal_status = (request.GET.get("status") or "").upper()
@@ -436,12 +577,12 @@ def payment_completed_view(request, oid):
     context = {
         "order": order,
         "order_items": order_items,
+        "tracking_items": tracking_items,
         "stripe_publishable_key": settings.STRIPE_PUBLIC_KEY,
 
     }
     return render(request, 'core/payment-completed.html',  context)
 
-@login_required
 def payment_failed_view(request):
     return render(request, 'core/payment-failed.html')
 
@@ -519,27 +660,26 @@ def wishlist_view(request):
     # w
 
 def add_to_wishlist(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"bool": False, "requires_login": True}, status=401)
+
     product_id = request.GET['id']
     product = Product.objects.get(id=product_id)
-    print("product id isssssssssssss:" + product_id)
-
-    context = {}
-
     wishlist_count = wishlist_model.objects.filter(product=product, user=request.user).count()
-    print(wishlist_count)
 
     if wishlist_count > 0:
-        context = {
-            "bool": True
-        }
+        context = {"bool": True}
     else:
-        new_wishlist = wishlist_model.objects.create(
+        wishlist_model.objects.create(
             user=request.user,
             product=product,
         )
-        context = {
-            "bool": True
-        }
+        context = {"bool": True}
+
+    context["wishlist_count"] = wishlist_model.objects.filter(
+        user=request.user,
+        product__isnull=False,
+    ).count()
 
     return JsonResponse(context)
 
@@ -559,13 +699,12 @@ def add_to_wishlist(request):
 #     return JsonResponse({"data": t, "w":wishlist})
 
 def remove_wishlist(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"bool": False, "requires_login": True}, status=401)
+
     pid = request.GET['id']
-    wishlist = wishlist_model.objects.filter(
-        user=request.user,
-        product__isnull=False,
-    ).select_related("product").order_by("-id")
     wishlist_d = get_object_or_404(wishlist_model, id=pid, user=request.user)
-    delete_product = wishlist_d.delete()
+    wishlist_d.delete()
     
     wishlist = wishlist_model.objects.filter(
         user=request.user,
@@ -574,7 +713,8 @@ def remove_wishlist(request):
 
     context = {
         "bool":True,
-        "w":wishlist
+        "w":wishlist,
+        "wishlist_count": wishlist.count(),
     }
     wishlist_json = serializers.serialize('json', wishlist)
     t = render_to_string('core/async/wishlist-list.html', context)

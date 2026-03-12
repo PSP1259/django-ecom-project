@@ -151,13 +151,47 @@
                                 <div class="header-action-icon-2">
                                     <a href="{% url 'core:wishlist' %}">
                                         <img class="svgInject" alt="E-commerce" src="{% static 'assets/imgs/theme/icons/icon-heart.svg' %}" />
-                                        {% if request.user.is_authenticated %}
-                                        <span class="pro-count blue">{{ wishlist.count }}</span>
-                                        {% else %}
-                                        <span class="pro-count blue">0</span>
-                                        {% endif %}
+                                        <span class="pro-count blue wishlist-items-count">{{ wishlist_count }}</span>
                                     </a>
                                     <a href="{% url 'core:wishlist' %}"><span class="lable">Wishlist</span></a>
+                                    <div class="cart-dropdown-wrap cart-dropdown-hm2">
+                                        {% if request.user.is_authenticated %}
+                                            {% if mini_wishlist_items %}
+                                            <ul>
+                                                {% for wishlist_item in mini_wishlist_items %}
+                                                <li>
+                                                    <div class="shopping-cart-img">
+                                                        <a href="{% url 'core:product-detail' wishlist_item.product.pid %}"><img alt="{{ wishlist_item.product.title }}" src="{{ wishlist_item.product.image.url }}" /></a>
+                                                    </div>
+                                                    <div class="shopping-cart-title">
+                                                        <h4><a href="{% url 'core:product-detail' wishlist_item.product.pid %}">{{ wishlist_item.product.title|truncatechars:30 }}</a></h4>
+                                                        <h3><span>Price: </span>${{ wishlist_item.product.price|floatformat:2 }}</h3>
+                                                    </div>
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                            <div class="shopping-cart-footer">
+                                                <div class="shopping-cart-button">
+                                                    <a href="{% url 'core:wishlist' %}" class="outline">View wishlist</a>
+                                                </div>
+                                            </div>
+                                            {% else %}
+                                            <div class="shopping-cart-footer">
+                                                <p class="mb-2">Your wishlist is empty.</p>
+                                                <div class="shopping-cart-button">
+                                                    <a href="{% url 'core:product-list' %}" class="outline">Browse products</a>
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                        {% else %}
+                                        <div class="shopping-cart-footer">
+                                            <p class="mb-2">Sign in to save wishlist items.</p>
+                                            <div class="shopping-cart-button">
+                                                <a href="{% url 'userauths:sign-in' %}?next={% url 'core:wishlist' %}" class="outline">Sign in</a>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    </div>
                                 </div>
                                 <div class="header-action-icon-2">
                                     <a class="mini-cart-icon" href="{% url 'core:cart' %}">
@@ -165,7 +199,7 @@
                                         <span class="pro-count blue cart-items-count">{{ request.session.cart_data_obj|length }}</span>
                                     </a>
                                     <a href="{% url 'core:cart' %}"><span class="lable">Cart</span></a>
-                                    <div class="cart-dropdown-wrap cart-dropdown-hm2">
+                                    <div class="cart-dropdown-wrap cart-dropdown-hm2 mini-cart-dropdown">
                                         {% if mini_cart_items %}
                                         <ul>
                                             {% for product_id, item in mini_cart_items %}
@@ -381,19 +415,53 @@
                             <div class="header-action-icon-2">
                                 <a href="{% url 'core:wishlist' %}">
                                     <img alt="E-commerce" src="{% static 'assets/imgs/theme/icons/icon-heart.svg' %}" />
-                                    {% if request.user.is_authenticated %}
-                                    <span class="pro-count blue">{{ wishlist.count }}</span>
-                                    {% else %}
-                                    <span class="pro-count blue">0</span>
-                                    {% endif %}
+                                    <span class="pro-count blue wishlist-items-count">{{ wishlist_count }}</span>
                                 </a>
+                                <div class="cart-dropdown-wrap cart-dropdown-hm2">
+                                    {% if request.user.is_authenticated %}
+                                        {% if mini_wishlist_items %}
+                                        <ul>
+                                            {% for wishlist_item in mini_wishlist_items %}
+                                            <li>
+                                                <div class="shopping-cart-img">
+                                                    <a href="{% url 'core:product-detail' wishlist_item.product.pid %}"><img alt="{{ wishlist_item.product.title }}" src="{{ wishlist_item.product.image.url }}" /></a>
+                                                </div>
+                                                <div class="shopping-cart-title">
+                                                    <h4><a href="{% url 'core:product-detail' wishlist_item.product.pid %}">{{ wishlist_item.product.title|truncatechars:30 }}</a></h4>
+                                                    <h3><span>Price: </span>${{ wishlist_item.product.price|floatformat:2 }}</h3>
+                                                </div>
+                                            </li>
+                                            {% endfor %}
+                                        </ul>
+                                        <div class="shopping-cart-footer">
+                                            <div class="shopping-cart-button">
+                                                <a href="{% url 'core:wishlist' %}" class="outline">View wishlist</a>
+                                            </div>
+                                        </div>
+                                        {% else %}
+                                        <div class="shopping-cart-footer">
+                                            <p class="mb-2">Your wishlist is empty.</p>
+                                            <div class="shopping-cart-button">
+                                                <a href="{% url 'core:product-list' %}" class="outline">Browse products</a>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    {% else %}
+                                    <div class="shopping-cart-footer">
+                                        <p class="mb-2">Sign in to save wishlist items.</p>
+                                        <div class="shopping-cart-button">
+                                            <a href="{% url 'userauths:sign-in' %}?next={% url 'core:wishlist' %}" class="outline">Sign in</a>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
                             </div>
                             <div class="header-action-icon-2">
                                 <a class="mini-cart-icon" href="{% url 'core:cart' %}">
                                     <img alt="E-commerce" src="{% static 'assets/imgs/theme/icons/icon-cart.svg' %}" />
                                     <span class="pro-count white cart-items-count">{{ request.session.cart_data_obj|length }}</span>
                                 </a>
-                                <div class="cart-dropdown-wrap cart-dropdown-hm2">
+                                <div class="cart-dropdown-wrap cart-dropdown-hm2 mini-cart-dropdown">
                                     {% if mini_cart_items %}
                                     <ul>
                                         {% for product_id, item in mini_cart_items %}

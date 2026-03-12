@@ -1,7 +1,5 @@
-from ast import Add
-from core.models import Product, Category, Vendor, CartOrder, ProductImages, ProductReview, wishlist_model, Address
+from core.models import Product, Category, Vendor, ProductReview, wishlist_model, Address
 from django.db.models import Min, Max
-from django.contrib import messages
 
 def default(request):
     categories = Category.objects.all()
@@ -10,13 +8,12 @@ def default(request):
     min_max_price = Product.objects.aggregate(Min("price"), Max("price"))
 
     if request.user.is_authenticated:
-        try:
-            wishlist = wishlist_model.objects.filter(user=request.user)
-        except:
-            messages.warning(request, "You need to login before accessing your wishlist.")
-            wishlist = 0
+        wishlist = wishlist_model.objects.filter(
+            user=request.user,
+            product__isnull=False,
+        ).select_related("product").order_by("-id")
     else:
-        wishlist = 0
+        wishlist = wishlist_model.objects.none()
 
     
     
@@ -38,6 +35,8 @@ def default(request):
     return {
         'categories':categories,
         'wishlist':wishlist,
+        'wishlist_count': wishlist.count(),
+        'mini_wishlist_items': wishlist[:4],
         'address':address,
         'vendors':vendors,
         'min_max_price':min_max_price,

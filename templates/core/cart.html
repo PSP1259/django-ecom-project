@@ -65,38 +65,57 @@
                             </table>
 
                             <div class="row mt-4">
+                                <h4 class="mb-20">Checkout Mode</h4>
+                                <div class="form-group col-lg-12">
+                                    <div class="custome-checkbox">
+                                        <input class="form-check-input" type="checkbox" id="checkout-mode-toggle" {% if checkout_initial.checkout_mode == "account" %}checked{% endif %}>
+                                        <label class="form-check-label" for="checkout-mode-toggle"><span>Order with account checkout</span></label>
+                                    </div>
+                                    <input type="hidden" name="checkout_mode" id="checkout-mode-input" value="{{ checkout_initial.checkout_mode|default:'guest' }}">
+                                </div>
+                                <div class="form-group col-lg-12">
+                                    <div id="checkout-mode-dropdown" class="border rounded p-3 bg-light">
+                                        {% if request.user.is_authenticated %}
+                                        <p class="mb-0">Signed in as <strong>{{ request.user.email }}</strong>. This order will appear in your dashboard.</p>
+                                        {% else %}
+                                        <p class="mb-2">If enabled, you will be redirected to login first. If disabled, one-time checkout runs directly.</p>
+                                        <a href="{% url 'userauths:sign-in' %}?next={% url 'core:cart' %}" class="btn btn-sm btn-outline-primary">Sign in now</a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
                                 <h4 class="mb-30">Bio Data</h4>
                                 <div class="row">
                                     <div class="form-group col-lg-12">
                                         <label for="">Full Name</label>
-                                        <input type="text" required="" name="full_name" value="{{request.user.username|title}}" placeholder="Full Name">
+                                        <input type="text" required="" name="full_name" value="{{ checkout_initial.full_name }}" placeholder="Full Name">
                                     </div>
                                     <div class="form-group col-lg-6">
                                         <label for="">Email</label>
-                                        <input type="text" required="" name="email"  placeholder="mobile *" value="{{request.user.email}}">
+                                        <input type="text" required="" name="email"  placeholder="mobile *" value="{{ checkout_initial.email }}">
                                     </div>
                                     <div class="form-group col-lg-6">
                                         <label for="">Mobile</label>
-                                        <input type="text" name="mobile" value="{{request.user.profile.phone}}" required="" placeholder="Address *">
+                                        <input type="text" name="mobile" value="{{ checkout_initial.mobile }}" required="" placeholder="Address *">
                                     </div>
                                 </div>
                                 <h4 class="mb-30">Shipping Details</h4>
                                 <div class="row">
                                     <div class="form-group col-lg-6">
                                         <label for="">Address</label>
-                                        <input type="text" name="address" value="" placeholder="Address">
+                                        <input type="text" name="address" value="{{ checkout_initial.address }}" placeholder="Address">
                                     </div>
                                     <div class="form-group col-lg-6">
                                         <label for="">City</label>
-                                        <input type="text" name="city"  placeholder="City *" value="">
+                                        <input type="text" name="city"  placeholder="City *" value="{{ checkout_initial.city }}">
                                     </div>
                                     <div class="form-group col-lg-6">
                                         <label for="">State</label>
-                                        <input type="text" name="state" value="" placeholder="State *">
+                                        <input type="text" name="state" value="{{ checkout_initial.state }}" placeholder="State *">
                                     </div>
                                     <div class="form-group col-lg-6">
                                         <label for="">Country</label>
-                                        <input type="text" name="country" value="" placeholder="Country *">
+                                        <input type="text" name="country" value="{{ checkout_initial.country }}" placeholder="Country *">
                                     </div>
                                 </div>
                             </div>
@@ -134,4 +153,24 @@
             </form>
         </div>
     </main>
+    <script>
+        (function () {
+            var toggle = document.getElementById("checkout-mode-toggle");
+            var input = document.getElementById("checkout-mode-input");
+            var dropdown = document.getElementById("checkout-mode-dropdown");
+
+            if (!toggle || !input || !dropdown) {
+                return;
+            }
+
+            function syncCheckoutMode() {
+                var accountMode = !!toggle.checked;
+                input.value = accountMode ? "account" : "guest";
+                dropdown.style.display = accountMode ? "block" : "none";
+            }
+
+            toggle.addEventListener("change", syncCheckoutMode);
+            syncCheckoutMode();
+        })();
+    </script>
 {% endblock content %}
