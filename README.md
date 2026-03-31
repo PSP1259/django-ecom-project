@@ -1,4 +1,4 @@
-# Ecommerce Tracking (GA4) + Checkout UX - Quick Setup (Top Priority)
+# Ecommerce Tracking (GA4) 
 
 Methods:
 
@@ -27,7 +27,7 @@ Django Shop
 
 ## 1. What is already implemented
 
-This project now sends the 4 required GA4 ecommerce events with `currency`, `value`, and `items`:
+This project now sends the 4 GA4 ecommerce events with `currency`, `value`, and `items`:
 
 - `view_item` -> [templates/core/product-detail.html](templates/core/product-detail.html)
 - `add_to_cart` -> [static/assets/js/function.js](static/assets/js/function.js) inside AJAX `success` for `/add-to-cart/`
@@ -93,42 +93,6 @@ Status: GTM Preview + GA4 Debug hits confirmed for all four events.
   - PayPal query `status=COMPLETED`.
 - If order is not paid, user is redirected to `payment-failed`.
 - Checkout/session/order endpoints now verify order access (`_order_is_accessible`) to avoid cross-order access.
-
-Result: much lower risk of inflated/false `purchase` events.
-
-## 5. Checkout + header UX updates (implemented)
-
-- Wishlist hover preview now works like mini-cart (desktop + mobile header):
-  - live count via `.wishlist-items-count`
-  - preview list from `mini_wishlist_items`
-- Cart page has inline checkout mode toggle (no extra page):
-  - `account` mode: login required
-  - `guest` mode: one-time checkout directly
-  - entered form data is preserved in session during auth redirect (`pending_checkout_form`)
-- Product discount UI cleanup:
-  - discount badge and struck `old-price` render only when `old_price > price`
-  - if prices are equal, no fake discount is shown
-
-## 6. GTM/GA4 prerequisite
-
-Make sure your GTM container snippet is loaded in the base layout:
-
-- Recommended file: [templates/partials/base.html](templates/partials/base.html)
-- If GTM is not loaded, `dataLayer.push(...)` runs but GA4 will not receive events.
-
-## 7. Quick test checklist (DebugView)
-
-1. Open GTM Preview mode.
-2. Open product detail page -> confirm `view_item`.
-3. Click Add to Cart -> confirm `add_to_cart` after AJAX success.
-4. Open checkout page -> confirm `begin_checkout`.
-5. Complete payment -> confirm exactly one `purchase` with correct `transaction_id`.
-6. Reload success page -> purchase should not fire again in same browser session.
-7. Toggle cart checkout mode:
-   - checked `account` + signed-out user -> redirect to sign-in with `next`
-   - unchecked `guest` -> direct one-time checkout flow
-8. Validate pricing UI:
-   - if `old_price == price`, no `%` badge and no `old-price` strike-through
 
 
 # Cloudflare Setup (Pre-Launch Access Protection)
