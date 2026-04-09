@@ -238,7 +238,7 @@
                                         item_category: "{{ p.category.title|default:''|escapejs }}",
                                         item_brand: "{{ p.vendor.title|default:''|escapejs }}",
                                         item_variant: "{{ p.type|default:''|escapejs }}",
-                                        price: {{ p.price|default:0 }},
+                                        price: {{ p.price|stringformat:".2f"|default:"0.00" }},
                                         index: {{ forloop.counter0 }}
                                     }{% if not forloop.last %},{% endif %}
                                     {% endfor %}
