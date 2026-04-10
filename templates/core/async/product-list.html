@@ -3,7 +3,7 @@
     <div class="product-cart-wrap mb-30">
         <div class="product-img-action-wrap">
             <div class="product-img product-img-zoom">
-                <a href="{% url 'core:product-detail' p.pid %}" onclick="trackSelectItem('{{ p.sku|escapejs }}', '{{ p.title|escapejs }}', '{{ p.category.title|default:''|escapejs }}', '{{ p.vendor.title|default:''|escapejs }}', '{{ p.type|default:''|escapejs }}', {{ p.price|stringformat:'.2f' }}, {{ forloop.counter0 }})">
+                <a href="{% url 'core:product-detail' p.pid %}" onclick="window.dataLayer = window.dataLayer || []; window.dataLayer.push({ event: 'select_item', ecommerce: { item_list_id: 'shop_main', item_list_name: 'Shop', items: [{ item_id: '{{ p.sku|escapejs }}', item_name: '{{ p.title|escapejs }}', item_category: '{{ p.category.title|default:''|escapejs }}', item_brand: '{{ p.vendor.title|default:''|escapejs }}', item_variant: '{{ p.type|default:''|escapejs }}', price: {{ p.price|stringformat:'.2f' }}, index: {{ forloop.counter0 }} }] } });">
                     <img class="default-img" src="{{ p.image.url }}" alt="" style="height: 280px; width: 280px; object-fit: cover;"   />
                     <img class="hover-img" src="{{ p.image.url }}" alt=""  style="height: 280px; width: 280px; object-fit: cover;"  />
 
@@ -12,7 +12,7 @@
             <div class="product-action-1">
                 <a aria-label="Add To Wishlist"  class="action-btn add-to-wishlist" data-product-item="{{p.id}}"><i class="fi-rs-heart"></i></a>
                 <!-- <a aria-label="Compare" class="action-btn" href="shop-compare.html"><i class="fi-rs-shuffle"></i></a> -->
-                <a href="{% url 'core:product-detail' p.pid %}" class="action-btn" onclick="trackSelectItem('{{ p.sku|escapejs }}', '{{ p.title|escapejs }}', '{{ p.category.title|default:''|escapejs }}', '{{ p.vendor.title|default:''|escapejs }}', '{{ p.type|default:''|escapejs }}', {{ p.price|stringformat:'.2f' }}, {{ forloop.counter0 }})"><i class="fi-rs-eye"></i></a>
+                <a href="{% url 'core:product-detail' p.pid %}" class="action-btn" onclick="window.dataLayer = window.dataLayer || []; window.dataLayer.push({ event: 'select_item', ecommerce: { item_list_id: 'shop_main', item_list_name: 'Shop', items: [{ item_id: '{{ p.sku|escapejs }}', item_name: '{{ p.title|escapejs }}', item_category: '{{ p.category.title|default:''|escapejs }}', item_brand: '{{ p.vendor.title|default:''|escapejs }}', item_variant: '{{ p.type|default:''|escapejs }}', price: {{ p.price|stringformat:'.2f' }}, index: {{ forloop.counter0 }} }] } });"><i class="fi-rs-eye"></i></a>
             </div>
             {% if p.old_price and p.old_price > p.price %}
             <div class="product-badges product-badges-position product-badges-mrg">
@@ -24,7 +24,7 @@
             <div class="product-category">
                 <a href="shop-grid-right.html">{{ p.category.title }}</a>
             </div>
-            <h2><a href="{% url 'core:product-detail' p.pid %}" onclick="trackSelectItem('{{ p.sku|escapejs }}', '{{ p.title|escapejs }}', '{{ p.category.title|default:''|escapejs }}', '{{ p.vendor.title|default:''|escapejs }}', '{{ p.type|default:''|escapejs }}', {{ p.price|stringformat:'.2f' }}, {{ forloop.counter0 }})">{{ p.title }}</a></h2>
+            <h2><a href="{% url 'core:product-detail' p.pid %}" onclick="window.dataLayer = window.dataLayer || []; window.dataLayer.push({ event: 'select_item', ecommerce: { item_list_id: 'shop_main', item_list_name: 'Shop', items: [{ item_id: '{{ p.sku|escapejs }}', item_name: '{{ p.title|escapejs }}', item_category: '{{ p.category.title|default:''|escapejs }}', item_brand: '{{ p.vendor.title|default:''|escapejs }}', item_variant: '{{ p.type|default:''|escapejs }}', price: {{ p.price|stringformat:'.2f' }}, index: {{ forloop.counter0 }} }] } });">{{ p.title }}</a></h2>
             <div class="product-rate-cover">
                 <!-- <div class="product-rate d-inline-block"> -->
                     <!-- <div class="product-rating" style="width: 20%"></div> -->
