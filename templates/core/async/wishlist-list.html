@@ -58,7 +58,7 @@
                                         <input type="hidden" class="product-id-{{ w.product.id }}" value="{{ w.product.id }}">
                                         <input type="hidden" class="product-title-{{ w.product.id }}" value="{{ w.product.title }}">
 
-                                        <button class="btn btn-sm add-to-cart-btn" data-index="{{ w.product.id }}">Add to cart</button>
+                                        <button class="btn btn-sm add-to-cart-btn" data-index="{{ w.product.id }}" onclick="trackAddToCart('{{ w.product.id|escapejs }}', '{{ w.product.title|escapejs }}', '{{ w.product.price|stringformat:'.2f' }}', document.querySelector('.product-quantity-{{ w.product.id }}') ? document.querySelector('.product-quantity-{{ w.product.id }}').value : 1)">Add to cart</button>
                                     </td>
                                     <td class="action text-center" data-title="Remove">
                                         <button style="border: none; background: none;" data-wishlist-product="{{ w.id }}"  class="text-body delete-wishlist-product"><i class="fi-rs-trash"></i></button>

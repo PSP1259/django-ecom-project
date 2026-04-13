@@ -199,25 +199,6 @@ $(document).ready(function () {
             return;
         }
 
-        const trackedQuantity = parseInt(quantity, 10) || 1;
-        const trackedPrice = parseFloat(productPrice);
-
-        window.dataLayer = window.dataLayer || [];
-        window.dataLayer.push({ ecommerce: null });
-        window.dataLayer.push({
-            event: "add_to_cart",
-            ecommerce: {
-                currency: "CHF",
-                value: Number.isFinite(trackedPrice) ? trackedPrice * trackedQuantity : 0,
-                items: [{
-                    item_id: productId,
-                    item_name: productTitle,
-                    price: Number.isFinite(trackedPrice) ? trackedPrice : 0,
-                    quantity: trackedQuantity
-                }]
-            }
-        });
-
         $.ajax({
             url: "/add-to-cart/",
             data: {
@@ -243,25 +224,6 @@ $(document).ready(function () {
         const productId = $(this).attr("data-product");
         const thisVal = $(this);
         const row = thisVal.closest("tr");
-        const productTitle = row.find(".product-name").first().text().trim();
-        const productPrice = parseFloat((row.find("td.price .text-body").first().text() || "").replace(/[^0-9.]/g, ""));
-        const productQuantity = parseInt(row.find(".product-qty-" + productId).first().val() || 1, 10) || 1;
-
-        window.dataLayer = window.dataLayer || [];
-        window.dataLayer.push({ ecommerce: null });
-        window.dataLayer.push({
-            event: "remove_from_cart",
-            ecommerce: {
-                currency: "CHF",
-                value: Number.isFinite(productPrice) ? productPrice * productQuantity : 0,
-                items: [{
-                    item_id: productId,
-                    item_name: productTitle,
-                    price: Number.isFinite(productPrice) ? productPrice : 0,
-                    quantity: productQuantity
-                }]
-            }
-        });
 
         $.ajax({
             url: "/delete-from-cart/",

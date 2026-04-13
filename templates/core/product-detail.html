@@ -96,7 +96,7 @@
                                                         <input type="hidden" class="product-variant-{{ p.id }}" value="{{ p.type|default:'' }}">
 
                                                     
-                                                    <button type="submit" class="button button-add-to-cart add-to-cart-btn" data-index="{{ p.id }}" id="add-to-cart-btn"><i class="fi-rs-shopping-cart"></i>Add to cart</button>
+                                                    <button type="submit" class="button button-add-to-cart add-to-cart-btn" data-index="{{ p.id }}" id="add-to-cart-btn" onclick="trackAddToCart('{{ p.id|escapejs }}', '{{ p.title|escapejs }}', '{{ p.price|stringformat:'.2f' }}', document.querySelector('.product-quantity-{{ p.id }}') ? document.querySelector('.product-quantity-{{ p.id }}').value : 1)"><i class="fi-rs-shopping-cart"></i>Add to cart</button>
                                                     <a aria-label="Add To Wishlist" class="action-btn hover-up add-to-wishlist" data-product-item="{{p.id}}"><i class="fi-rs-heart"></i></a>
                                                     <a aria-label="Compare" class="action-btn hover-up" href="shop-compare.html"><i class="fi-rs-shuffle"></i></a>
                                                 </div>
@@ -455,7 +455,7 @@
                                                                 <input type="hidden" class="product-brand-{{ related.id }}" value="{% if related.vendor %}{{ related.vendor.title }}{% endif %}">
                                                                 <input type="hidden" class="product-variant-{{ related.id }}" value="{{ related.type|default:'' }}">
                                                                 <div class="d-flex">
-                                                                    <button class="add add-to-cart-btn" data-index="{{ related.id }}" style="border: none;" id="add-to-cart-btn"><i class="fi-rs-shopping-cart mr-5"></i>Add</button>
+                                                                    <button class="add add-to-cart-btn" data-index="{{ related.id }}" style="border: none;" id="add-to-cart-btn" onclick="trackAddToCart('{{ related.id|escapejs }}', '{{ related.title|escapejs }}', '{{ related.price|stringformat:'.2f' }}', document.querySelector('.product-quantity-{{ related.id }}') ? document.querySelector('.product-quantity-{{ related.id }}').value : 1)"><i class="fi-rs-shopping-cart mr-5"></i>Add</button>
                                                                     <button style="border: none; background: none;" class="add-to-wishlist" data-product-item="{{related.id}}"><i class="fi-rs-heart" style="fill: aqua;"></i></button>
                                                                 </div>
                                                                 <!-- <button class="add add-to-cart-btn" data-index="{{ related.id }}" style="border: none;" id="add-to-cart-btn"><i class="fi-rs-shopping-cart mr-5"></i>Add</button> -->

@@ -856,6 +856,49 @@
     <script src="{% static 'assets/js/plugins/jquery.vticker-min.js' %}"></script>
     <script src="{% static 'assets/js/plugins/jquery.theia.sticky.js' %}"></script>
     <script src="{% static 'assets/js/plugins/jquery.elevatezoom.js' %}"></script>
+    <script>
+        function trackAddToCart(itemId, itemName, price, quantity) {
+            var qty = parseInt(quantity, 10) || 1;
+            var itemPrice = parseFloat(price) || 0;
+
+            window.dataLayer = window.dataLayer || [];
+            window.dataLayer.push({ ecommerce: null });
+            window.dataLayer.push({
+                event: "add_to_cart",
+                ecommerce: {
+                    currency: "CHF",
+                    value: itemPrice * qty,
+                    items: [{
+                        item_id: itemId,
+                        item_name: itemName,
+                        price: itemPrice,
+                        quantity: qty
+                    }]
+                }
+            });
+        }
+
+        function trackRemoveFromCart(itemId, itemName, price, quantity) {
+            var qty = parseInt(quantity, 10) || 1;
+            var itemPrice = parseFloat(price) || 0;
+
+            window.dataLayer = window.dataLayer || [];
+            window.dataLayer.push({ ecommerce: null });
+            window.dataLayer.push({
+                event: "remove_from_cart",
+                ecommerce: {
+                    currency: "CHF",
+                    value: itemPrice * qty,
+                    items: [{
+                        item_id: itemId,
+                        item_name: itemName,
+                        price: itemPrice,
+                        quantity: qty
+                    }]
+                }
+            });
+        }
+    </script>
     <!-- Template  JS -->
     <script src="{% static 'assets/js/main.js' %}"></script>
     <script src="{% static 'assets/js/shop.js' %}"></script>

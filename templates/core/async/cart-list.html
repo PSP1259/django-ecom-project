@@ -62,7 +62,7 @@
                                     </td>
                                   
                                     <td class="action text-center" data-title="Remove"><button style="border: none; background: none;"  class="text-body update-product" data-product="{{ product_id }}"><i class="fi-rs-refresh"></i></button></td>
-                                    <td class="action text-center" data-title="Remove"><button style="border: none; background: none;"  class="text-body delete-product" data-product="{{ product_id }}"><i class="fi-rs-trash"></i></button></td>
+                                    <td class="action text-center" data-title="Remove"><button style="border: none; background: none;"  class="text-body delete-product" data-product="{{ product_id }}" onclick="trackRemoveFromCart('{{ product_id|escapejs }}', '{{ item.title|escapejs }}', '{{ item.price|floatformat:2 }}', document.querySelector('.product-qty-{{ product_id }}') ? document.querySelector('.product-qty-{{ product_id }}').value : '{{ item.qty }}')"><i class="fi-rs-trash"></i></button></td>
 
                                 </tr>
                                 {% endfor %}
