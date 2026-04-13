@@ -668,13 +668,13 @@ def add_to_wishlist(request):
     wishlist_exists = wishlist_model.objects.filter(product=product, user=request.user).exists()
 
     if wishlist_exists:
-        context = {"bool": True, "created": False}
+        context = {"bool": True}
     else:
         wishlist_model.objects.create(
             user=request.user,
             product=product,
         )
-        context = {"bool": True, "created": True}
+        context = {"bool": True}
 
     context["wishlist_count"] = wishlist_model.objects.filter(
         user=request.user,

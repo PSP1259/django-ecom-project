@@ -91,7 +91,6 @@
                                                         <input type="hidden" class="product-image-{{ p.id }}" value="{% if p.image %}{{ p.image.url }}{% else %}{% static 'assets/imgs/shop/product-1-1.jpg' %}{% endif %}">
                                                         <input type="hidden" class="product-id-{{ p.id }}" value="{{ p.id }}">
                                                         <input type="hidden" class="product-title-{{ p.id }}" value="{{ p.title }}">
-                                                        <input type="hidden" class="product-sku-{{ p.id }}" value="{{ p.sku|default:p.id }}">
                                                         <input type="hidden" class="product-category-{{ p.id }}" value="{{ p.category.title|default:'' }}">
                                                         <input type="hidden" class="product-brand-{{ p.id }}" value="{% if p.vendor %}{{ p.vendor.title }}{% endif %}">
                                                         <input type="hidden" class="product-variant-{{ p.id }}" value="{{ p.type|default:'' }}">
@@ -452,7 +451,6 @@
                                                                 <input type="hidden" class="product-image-{{ related.id }}" value="{% if related.image %}{{ related.image.url }}{% else %}{% static 'assets/imgs/shop/product-1-1.jpg' %}{% endif %}">
                                                                 <input type="hidden" class="product-id-{{ related.id }}" value="{{ related.id }}">
                                                                 <input type="hidden" class="product-title-{{ related.id }}" value="{{ related.title }}">
-                                                                <input type="hidden" class="product-sku-{{ related.id }}" value="{{ related.sku|default:related.id }}">
                                                                 <input type="hidden" class="product-category-{{ related.id }}" value="{{ related.category.title|default:'' }}">
                                                                 <input type="hidden" class="product-brand-{{ related.id }}" value="{% if related.vendor %}{{ related.vendor.title }}{% endif %}">
                                                                 <input type="hidden" class="product-variant-{{ related.id }}" value="{{ related.type|default:'' }}">

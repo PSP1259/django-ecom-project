@@ -135,19 +135,6 @@ $(document).ready(function () {
         });
     }
 
-    function pushEcommerceEvent(eventName, ecommerceData) {
-        if (!eventName || !ecommerceData) {
-            return;
-        }
-
-        window.dataLayer = window.dataLayer || [];
-        window.dataLayer.push({ ecommerce: null });
-        window.dataLayer.push({
-            event: eventName,
-            ecommerce: ecommerceData
-        });
-    }
-
     $(document).on("click", ".filter-checkbox, #price-filter-btn", function () {
         const filterObject = {};
         const minPrice = $("#max_price").attr("min");
@@ -231,15 +218,20 @@ $(document).ready(function () {
                 const trackedQuantity = parseInt(quantity, 10) || 1;
                 const trackedPrice = parseFloat(productPrice);
 
-                pushEcommerceEvent("add_to_cart", {
-                    currency: "CHF",
-                    value: Number.isFinite(trackedPrice) ? trackedPrice * trackedQuantity : 0,
-                    items: [{
-                        item_id: productId,
-                        item_name: productTitle,
-                        price: trackedPrice,
-                        quantity: trackedQuantity
-                    }]
+                window.dataLayer = window.dataLayer || [];
+                window.dataLayer.push({ ecommerce: null });
+                window.dataLayer.push({
+                    event: "add_to_cart",
+                    ecommerce: {
+                        currency: "CHF",
+                        value: Number.isFinite(trackedPrice) ? trackedPrice * trackedQuantity : 0,
+                        items: [{
+                            item_id: productId,
+                            item_name: productTitle,
+                            price: Number.isFinite(trackedPrice) ? trackedPrice : 0,
+                            quantity: trackedQuantity
+                        }]
+                    }
                 });
             }
         });
@@ -250,6 +242,10 @@ $(document).ready(function () {
 
         const productId = $(this).attr("data-product");
         const thisVal = $(this);
+        const row = thisVal.closest("tr");
+        const productTitle = row.find(".product-name").first().text().trim();
+        const productPrice = parseFloat((row.find("td.price .text-body").first().text() || "").replace(/[^0-9.]/g, ""));
+        const productQuantity = parseInt(row.find(".product-qty-" + productId).first().val() || 1, 10) || 1;
 
         $.ajax({
             url: "/delete-from-cart/",
@@ -263,7 +259,26 @@ $(document).ready(function () {
             success: function (response) {
                 thisVal.show();
                 $(".cart-items-count").text(response.totalcartitems);
-                window.location.reload();
+
+                window.dataLayer = window.dataLayer || [];
+                window.dataLayer.push({ ecommerce: null });
+                window.dataLayer.push({
+                    event: "remove_from_cart",
+                    ecommerce: {
+                        currency: "CHF",
+                        value: Number.isFinite(productPrice) ? productPrice * productQuantity : 0,
+                        items: [{
+                            item_id: productId,
+                            item_name: productTitle,
+                            price: Number.isFinite(productPrice) ? productPrice : 0,
+                            quantity: productQuantity
+                        }]
+                    }
+                });
+
+                setTimeout(function () {
+                    window.location.reload();
+                }, 150);
             }
         });
     });
@@ -339,39 +354,6 @@ $(document).ready(function () {
 
                 setWishlistButtonsActive(productId);
                 $(".wishlist-items-count").text(response.wishlist_count);
-
-                if (response.created !== true) {
-                    showFloatingAlert("Artikel ist bereits auf der Wunschliste.", "info");
-                    return;
-                }
-
-                const productSku = $(".product-sku-" + productId).first().val() || $(".product-id-" + productId).first().val() || productId;
-                const productTitle = $(".product-title-" + productId).first().val() || "";
-                const productCategory = $(".product-category-" + productId).first().val() || "";
-                const productBrand = $(".product-brand-" + productId).first().val() || "";
-                const productVariant = $(".product-variant-" + productId).first().val() || "";
-                const productPrice = parseFloat(($(".current-product-price-" + productId).first().text() || "").replace(/[^0-9.]/g, ""));
-                const productQuantity = parseInt($(".product-quantity-" + productId).first().val() || 1, 10) || 1;
-
-                window.dataLayer = window.dataLayer || [];
-                window.dataLayer.push({ ecommerce: null });
-                window.dataLayer.push({
-                    event: "add_to_wishlist",
-                    ecommerce: {
-                        currency: "CHF",
-                        value: Number.isFinite(productPrice) ? productPrice * productQuantity : 0,
-                        items: [{
-                            item_id: productSku,
-                            item_name: productTitle,
-                            item_brand: productBrand,
-                            item_category: productCategory,
-                            item_variant: productVariant,
-                            price: Number.isFinite(productPrice) ? productPrice : 0,
-                            google_business_vertical: "retail",
-                            quantity: productQuantity
-                        }]
-                    }
-                });
 
                 showFloatingAlert("Artikel zur Wunschliste hinzugefugt.", "success");
             },

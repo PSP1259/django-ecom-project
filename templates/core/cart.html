@@ -173,4 +173,25 @@
             syncCheckoutMode();
         })();
     </script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({ ecommerce: null });
+        window.dataLayer.push({
+            event: "view_cart",
+            ecommerce: {
+                currency: "CHF",
+                value: {{ cart_total_amount|floatformat:2 }},
+                items: [
+                    {% for product_id, item in cart_data.items %}
+                    {
+                        item_id: "{{ product_id|escapejs }}",
+                        item_name: "{{ item.title|escapejs }}",
+                        price: {{ item.price|floatformat:2 }},
+                        quantity: {{ item.qty }}
+                    }{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ]
+            }
+        });
+    </script>
 {% endblock content %}
