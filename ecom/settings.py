@@ -148,7 +148,14 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 MEDIA_URL = '/media/'
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = env.str("DJANGO_MEDIA_ROOT", default=os.path.join(BASE_DIR, 'media'))
+
+AWS_ACCESS_KEY_ID = env.str("AWS_ACCESS_KEY_ID", default="")
+USE_S3_MEDIA = env.bool("DJANGO_USE_S3_MEDIA", default=bool(AWS_ACCESS_KEY_ID))
+
+# WhiteNoise serves static files, but not user-uploaded media. When no
+# object storage is configured, let Django expose /media/ explicitly.
+SERVE_MEDIA_LOCALLY = env.bool("DJANGO_SERVE_MEDIA", default=not USE_S3_MEDIA)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
@@ -392,14 +399,17 @@ PAYPAL_RECEIVER_EMAIL = env.str("PAYPAL_RECEIVER_EMAIL", default="")
 PAYPAL_TEST = env.bool("PAYPAL_TEST", default=True)
 
 
-if env.str("AWS_ACCESS_KEY_ID", default=None):
+if USE_S3_MEDIA:
     INSTALLED_APPS += ['storages']
-    AWS_ACCESS_KEY_ID = env.str("AWS_ACCESS_KEY_ID")
     AWS_SECRET_ACCESS_KEY = env.str("AWS_SECRET_ACCESS_KEY")
     AWS_STORAGE_BUCKET_NAME = env.str("AWS_STORAGE_BUCKET_NAME")
     AWS_S3_REGION_NAME = env.str("AWS_S3_REGION_NAME", default="eu-central-1")
-    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+    AWS_S3_CUSTOM_DOMAIN = env.str(
+        "AWS_S3_CUSTOM_DOMAIN",
+        default=f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com',
+    )
     
     # Media Dateien (Produktbilder) zu S3
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
+    SERVE_MEDIA_LOCALLY = False
