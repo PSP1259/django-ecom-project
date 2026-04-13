@@ -102,6 +102,39 @@ $(document).ready(function () {
         dropdowns.html(html);
     }
 
+    function showFloatingAlert(message, type) {
+        let container = $("#site-alert-container");
+
+        if (!container.length) {
+            $("body").append(
+                "<div id='site-alert-container' style='position:fixed;top:100px;right:20px;z-index:9999;max-width:320px;width:calc(100% - 40px);'></div>"
+            );
+            container = $("#site-alert-container");
+        }
+
+        const alert = $(
+            "<div class='alert alert-" + escapeHtml(type || "info") + " shadow-sm mb-2' role='alert'>" +
+                escapeHtml(message) +
+            "</div>"
+        );
+
+        container.append(alert);
+        setTimeout(function () {
+            alert.fadeOut(250, function () {
+                $(this).remove();
+            });
+        }, 2200);
+    }
+
+    function setWishlistButtonsActive(productId) {
+        $(".add-to-wishlist[data-product-item='" + productId + "']").each(function () {
+            const button = $(this);
+            button.attr("aria-label", "In Wishlist");
+            button.attr("title", "In Wishlist");
+            button.html("<i class='fi-rs-heart' style='color:#dc3545;'></i>");
+        });
+    }
+
     function pushEcommerceEvent(eventName, ecommerceData) {
         if (!eventName || !ecommerceData) {
             return;
@@ -299,15 +332,16 @@ $(document).ready(function () {
             },
             dataType: "json",
             success: function (response) {
-                thisVal.html("<i class='fas fa-heart text-danger'></i>");
                 if (response.bool !== true) {
-                    thisVal.html("<i class='fi-rs-heart'></i>");
+                    showFloatingAlert("Wunschliste konnte nicht aktualisiert werden.", "danger");
                     return;
                 }
 
+                setWishlistButtonsActive(productId);
                 $(".wishlist-items-count").text(response.wishlist_count);
 
                 if (response.created !== true) {
+                    showFloatingAlert("Artikel ist bereits auf der Wunschliste.", "info");
                     return;
                 }
 
@@ -338,6 +372,17 @@ $(document).ready(function () {
                         }]
                     }
                 });
+
+                showFloatingAlert("Artikel zur Wunschliste hinzugefugt.", "success");
+            },
+            error: function (xhr) {
+                if (xhr.status === 401) {
+                    const nextUrl = window.location.pathname + window.location.search;
+                    window.location.href = "/user/sign-in/?next=" + encodeURIComponent(nextUrl);
+                    return;
+                }
+
+                showFloatingAlert("Wunschliste konnte nicht aktualisiert werden.", "danger");
             }
         });
     });
