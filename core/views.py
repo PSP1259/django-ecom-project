@@ -519,6 +519,7 @@ def checkout(request, oid):
 
     order_items = CartOrderProducts.objects.filter(order=order)
     tracking_items = _build_tracking_items(order_items)
+    order_coupon = order.coupons.order_by("id").first()
 
    
     if request.method == "POST":
@@ -548,6 +549,7 @@ def checkout(request, oid):
         "order": order,
         "order_items": order_items,
         "tracking_items": tracking_items,
+        "order_coupon_code": order_coupon.code if order_coupon else "",
         "stripe_publishable_key": settings.STRIPE_PUBLIC_KEY,
 
     }

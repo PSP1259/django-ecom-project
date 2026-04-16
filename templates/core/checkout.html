@@ -90,8 +90,45 @@
     <script src="https://js.stripe.com/v3/"></script>
 
     <script>
+        // GA4 add_payment_info
+        // GTM dataLayer equivalent of:
+        // gtag("event", "add_payment_info", { currency, value, coupon, payment_type, items })
+        function trackAddPaymentInfo(paymentType) {
+            window.dataLayer = window.dataLayer || [];
+            window.dataLayer.push({ ecommerce: null });
+            window.dataLayer.push({
+                event: "add_payment_info",
+                ecommerce: {
+                    currency: "CHF",
+                    value: {{ order.price|floatformat:2 }},
+                    {% if order_coupon_code %}
+                    coupon: "{{ order_coupon_code|escapejs }}",
+                    {% endif %}
+                    payment_type: paymentType,
+                    items: [
+                        {% for item in tracking_items %}
+                        {
+                            item_id: "{{ item.item_id|escapejs }}",
+                            item_name: "{{ item.item_name|escapejs }}",
+                            item_brand: "{{ item.item_brand|default:''|escapejs }}",
+                            item_category: "{{ item.item_category|default:''|escapejs }}",
+                            item_variant: "{{ item.item_variant|default:''|escapejs }}",
+                            price: {{ item.price|floatformat:2 }},
+                            quantity: {{ item.quantity }}
+                        }{% if not forloop.last %},{% endif %}
+                        {% endfor %}
+                    ]
+                }
+            });
+        }
+    </script>
+
+    <script>
         paypal
             .Buttons({
+                onClick: function () {
+                    trackAddPaymentInfo("PayPal");
+                },
                 createOrder: function (data, actions) {
                     return actions.order.create({
                         purchase_units: [
@@ -122,6 +159,7 @@
 
         try {
             checkoutButton.addEventListener("click", function () {
+            trackAddPaymentInfo("Credit Card");
             var email = "{{ order.email|default:''|escapejs }}";
 
             checkoutButton.innerHTML = "Processing <i class='fas fa-spinner fa-spin'></i>";
@@ -154,41 +192,35 @@
         }
     </script>
 
-{{ tracking_items|json_script:"checkout-tracking-items" }}
 <script>
+  // GA4 begin_checkout
+  // GTM dataLayer equivalent of:
+  // gtag("event", "begin_checkout", { currency, value, coupon, items })
   window.dataLayer = window.dataLayer || [];
-  var beginCheckoutStorageKey = "ga4_begin_checkout_sent_{{ order.oid|escapejs }}";
-  var checkoutItems = [];
-
-  try {
-    checkoutItems = JSON.parse(document.getElementById("checkout-tracking-items").textContent || "[]");
-  } catch (error) {
-    checkoutItems = [];
-  }
-
-  var beginCheckoutAlreadyTracked = false;
-  try {
-    beginCheckoutAlreadyTracked = window.sessionStorage.getItem(beginCheckoutStorageKey) === "1";
-  } catch (error) {
-    beginCheckoutAlreadyTracked = false;
-  }
-
-  if (!beginCheckoutAlreadyTracked) {
-    window.dataLayer.push({
-      event: "begin_checkout",
-      ecommerce: {
-        currency: "CHF",
-        value: parseFloat("{{ order.price }}"),
-        items: checkoutItems
-      }
-    });
-
-    try {
-      window.sessionStorage.setItem(beginCheckoutStorageKey, "1");
-    } catch (error) {
-      // Ignore storage issues.
+  window.dataLayer.push({ ecommerce: null });
+  window.dataLayer.push({
+    event: "begin_checkout",
+    ecommerce: {
+      currency: "CHF",
+      value: {{ order.price|floatformat:2 }},
+      {% if order_coupon_code %}
+      coupon: "{{ order_coupon_code|escapejs }}",
+      {% endif %}
+      items: [
+        {% for item in tracking_items %}
+        {
+          item_id: "{{ item.item_id|escapejs }}",
+          item_name: "{{ item.item_name|escapejs }}",
+          item_brand: "{{ item.item_brand|default:''|escapejs }}",
+          item_category: "{{ item.item_category|default:''|escapejs }}",
+          item_variant: "{{ item.item_variant|default:''|escapejs }}",
+          price: {{ item.price|floatformat:2 }},
+          quantity: {{ item.quantity }}
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+      ]
     }
-  }
+  });
 </script>
 
 {% endblock content %}
