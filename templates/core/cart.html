@@ -58,7 +58,7 @@
                                             <h4 class="text-brand">${% widthratio item.price 1 item.qty %} </h4>
                                         </td>
                                         <td class="action text-center" data-title="Remove"><a style="border: none; background: none;"  class="text-body update-product" data-product="{{ product_id }}"><i class="fi-rs-refresh"></i></a></td>
-                                        <td class="action text-center" data-title="Remove"><a style="border: none; background: none;"  class="text-body delete-product" data-product="{{ product_id }}" onclick="trackRemoveFromCart('{{ product_id|escapejs }}', '{{ item.title|escapejs }}', '{{ item.price|floatformat:2 }}', document.querySelector('.product-qty-{{ product_id }}') ? document.querySelector('.product-qty-{{ product_id }}').value : '{{ item.qty }}')"><i class="fi-rs-trash"></i></a></td>
+                                        <td class="action text-center" data-title="Remove"><a style="border: none; background: none;"  class="text-body delete-product" data-product="{{ product_id }}" onclick="trackRemoveFromCart('{{ product_id|escapejs }}', '{{ item.title|escapejs }}', '{{ item.price|stringformat:'.2f' }}', document.querySelector('.product-qty-{{ product_id }}') ? document.querySelector('.product-qty-{{ product_id }}').value : '{{ item.qty }}')"><i class="fi-rs-trash"></i></a></td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
@@ -193,14 +193,14 @@
                     event: "add_shipping_info",
                     ecommerce: {
                         currency: "CHF",
-                        value: {{ cart_total_amount|floatformat:2 }},
+                        value: {{ cart_total_amount|stringformat:'.2f' }},
                         shipping_tier: "Standard",
                         items: [
                             {% for product_id, item in cart_data.items %}
                             {
                                 item_id: "{{ product_id|escapejs }}",
                                 item_name: "{{ item.title|escapejs }}",
-                                price: {{ item.price|floatformat:2 }},
+                                price: {{ item.price|stringformat:'.2f' }},
                                 quantity: {{ item.qty }}
                             }{% if not forloop.last %},{% endif %}
                             {% endfor %}
@@ -224,13 +224,13 @@
             event: "view_cart",
             ecommerce: {
                 currency: "CHF",
-                value: {{ cart_total_amount|floatformat:2 }},
+                value: {{ cart_total_amount|stringformat:'.2f' }},
                 items: [
                     {% for product_id, item in cart_data.items %}
                     {
                         item_id: "{{ product_id|escapejs }}",
                         item_name: "{{ item.title|escapejs }}",
-                        price: {{ item.price|floatformat:2 }},
+                        price: {{ item.price|stringformat:'.2f' }},
                         quantity: {{ item.qty }}
                     }{% if not forloop.last %},{% endif %}
                     {% endfor %}

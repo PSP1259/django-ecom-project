@@ -100,7 +100,7 @@
                 event: "add_payment_info",
                 ecommerce: {
                     currency: "CHF",
-                    value: {{ order.price|floatformat:2 }},
+                    value: {{ order.price|stringformat:'.2f' }},
                     {% if order_coupon_code %}
                     coupon: "{{ order_coupon_code|escapejs }}",
                     {% endif %}
@@ -113,7 +113,7 @@
                             item_brand: "{{ item.item_brand|default:''|escapejs }}",
                             item_category: "{{ item.item_category|default:''|escapejs }}",
                             item_variant: "{{ item.item_variant|default:''|escapejs }}",
-                            price: {{ item.price|floatformat:2 }},
+                            price: {{ item.price|stringformat:'.2f' }},
                             quantity: {{ item.quantity }}
                         }{% if not forloop.last %},{% endif %}
                         {% endfor %}
@@ -134,7 +134,7 @@
                         purchase_units: [
                             {
                                 amount: {
-                                    value: "{{order.price}}",
+                                    value: "{{ order.price|stringformat:'.2f' }}",
                                 },
                             },
                         ],
@@ -202,7 +202,7 @@
     event: "begin_checkout",
     ecommerce: {
       currency: "CHF",
-      value: {{ order.price|floatformat:2 }},
+      value: {{ order.price|stringformat:'.2f' }},
       {% if order_coupon_code %}
       coupon: "{{ order_coupon_code|escapejs }}",
       {% endif %}
@@ -214,7 +214,7 @@
           item_brand: "{{ item.item_brand|default:''|escapejs }}",
           item_category: "{{ item.item_category|default:''|escapejs }}",
           item_variant: "{{ item.item_variant|default:''|escapejs }}",
-          price: {{ item.price|floatformat:2 }},
+          price: {{ item.price|stringformat:'.2f' }},
           quantity: {{ item.quantity }}
         }{% if not forloop.last %},{% endif %}
         {% endfor %}

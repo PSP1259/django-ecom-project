@@ -149,6 +149,10 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 MEDIA_URL = '/media/'
 
 MEDIA_ROOT = env.str("DJANGO_MEDIA_ROOT", default=os.path.join(BASE_DIR, 'media'))
+MEDIA_FALLBACK_STATIC_PATH = env.str(
+    "DJANGO_MEDIA_FALLBACK_STATIC_PATH",
+    default="assets/imgs/shop/product-1-1.jpg",
+)
 
 AWS_ACCESS_KEY_ID = env.str("AWS_ACCESS_KEY_ID", default="")
 USE_S3_MEDIA = env.bool("DJANGO_USE_S3_MEDIA", default=bool(AWS_ACCESS_KEY_ID))

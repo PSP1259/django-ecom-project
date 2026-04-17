@@ -24,7 +24,7 @@
     event: "purchase",
     ecommerce: {
       transaction_id: "{{ order.oid|escapejs }}",
-      value: {{ order.price|floatformat:2 }},
+      value: {{ order.price|stringformat:'.2f' }},
       tax: 0,
       shipping: 0,
       currency: "CHF",
@@ -40,7 +40,7 @@
           item_brand: "{{ item.item_brand|default:''|escapejs }}",
           item_category: "{{ item.item_category|default:''|escapejs }}",
           item_variant: "{{ item.item_variant|default:''|escapejs }}",
-          price: {{ item.price|floatformat:2 }},
+          price: {{ item.price|stringformat:'.2f' }},
           quantity: {{ item.quantity }}
         }{% if not forloop.last %},{% endif %}
         {% endfor %}
