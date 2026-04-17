@@ -575,11 +575,19 @@ def payment_completed_view(request, oid):
 
     if not order.paid_status:
         return redirect("core:payment-failed")
+
+    order_coupon = order.coupons.order_by("id").first()
+    has_previous_paid_orders = CartOrder.objects.filter(
+        email=order.email,
+        paid_status=True,
+    ).exclude(id=order.id).exists()
         
     context = {
         "order": order,
         "order_items": order_items,
         "tracking_items": tracking_items,
+        "order_coupon_code": order_coupon.code if order_coupon else "",
+        "customer_type": "returning" if has_previous_paid_orders else "new",
         "stripe_publishable_key": settings.STRIPE_PUBLIC_KEY,
 
     }

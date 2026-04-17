@@ -14,44 +14,39 @@
 </div>
 
 {% if order.paid_status %}
-{{ tracking_items|json_script:"purchase-tracking-items" }}
 <script>
+  // GA4 purchase
+  // GTM dataLayer equivalent of:
+  // gtag("event", "purchase", { transaction_id, value, tax, shipping, currency, coupon, customer_type, items })
   window.dataLayer = window.dataLayer || [];
-  var purchasedItems = [];
-
-  try {
-    purchasedItems = JSON.parse(document.getElementById("purchase-tracking-items").textContent || "[]");
-  } catch (error) {
-    purchasedItems = [];
-  }
-
-  var transactionId = "{{ order.oid|escapejs }}";
-  var purchaseStorageKey = "ga4_purchase_sent_" + transactionId;
-  var alreadyTracked = false;
-
-  try {
-    alreadyTracked = window.sessionStorage.getItem(purchaseStorageKey) === "1";
-  } catch (error) {
-    alreadyTracked = false;
-  }
-
-  if (!alreadyTracked) {
-    window.dataLayer.push({
-      event: "purchase",
-      ecommerce: {
-        transaction_id: transactionId,
-        value: parseFloat("{{ order.price }}"),
-        currency: "CHF",
-        items: purchasedItems
-      }
-    });
-
-    try {
-      window.sessionStorage.setItem(purchaseStorageKey, "1");
-    } catch (error) {
-      // Ignore storage issues.
+  window.dataLayer.push({ ecommerce: null });
+  window.dataLayer.push({
+    event: "purchase",
+    ecommerce: {
+      transaction_id: "{{ order.oid|escapejs }}",
+      value: {{ order.price|floatformat:2 }},
+      tax: 0,
+      shipping: 0,
+      currency: "CHF",
+      {% if order_coupon_code %}
+      coupon: "{{ order_coupon_code|escapejs }}",
+      {% endif %}
+      customer_type: "{{ customer_type|escapejs }}",
+      items: [
+        {% for item in tracking_items %}
+        {
+          item_id: "{{ item.item_id|escapejs }}",
+          item_name: "{{ item.item_name|escapejs }}",
+          item_brand: "{{ item.item_brand|default:''|escapejs }}",
+          item_category: "{{ item.item_category|default:''|escapejs }}",
+          item_variant: "{{ item.item_variant|default:''|escapejs }}",
+          price: {{ item.price|floatformat:2 }},
+          quantity: {{ item.quantity }}
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+      ]
     }
-  }
+  });
 </script>
 {% endif %}
 
